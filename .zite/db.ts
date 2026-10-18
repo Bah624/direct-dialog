@@ -422,6 +422,52 @@ export type CollaborateursRecordInput = {
   notificationsActives: string | boolean | null;
 };
 
+/** A record in the "Utilisateurs" table (table locale, ajoutée pour la version autonome). */
+export type UtilisateursRecordType = {
+  id: string;
+  /** "Nom Complet" */
+  nomComplet?: string;
+  email?: string;
+  telephone?: string;
+  /** "Profil" : Administrateur, Directeur général, Comptable, RH, … */
+  profil?: string;
+  /** "Statut" : Actif ou Inactif */
+  statut?: "Actif" | "Inactif" | string;
+  notes?: string;
+  /** "Dernière Connexion" (YYYY-MM-DD) */
+  derniereConnexion?: string;
+  /** Read-only. "Date Création". */
+  dateCreation?: string;
+};
+
+/** What you may write when creating or updating a record in the "Utilisateurs" table. */
+export type UtilisateursRecordInput = {
+  nomComplet?: string | null;
+  email?: string | null;
+  telephone?: string | null;
+  profil?: string | null;
+  statut?: string | null;
+  notes?: string | null;
+  derniereConnexion?: string | null;
+};
+
+/** A record in the "Parametres" table (réglages clé/valeur). */
+export type ParametresRecordType = {
+  id: string;
+  /** "Clé" */
+  cle?: string;
+  /** "Valeur" — JSON sérialisé */
+  valeur?: string;
+  /** Read-only. "Dernière Mise à Jour". */
+  dateMiseAJour?: string;
+};
+
+/** What you may write when creating or updating a record in the "Parametres" table. */
+export type ParametresRecordInput = {
+  cle?: string | null;
+  valeur?: string | null;
+};
+
 export interface ZiteAuthUser {
   id: string;
   name: string;
@@ -442,6 +488,8 @@ export const zite = {
   sortiesDeStock: createTableClient<SortiesDeStockRecordType, SortiesDeStockRecordInput>('SortiesDeStock'), // "Sorties de Stock"
   conversationsAgent: createTableClient<ConversationsAgentRecordType, ConversationsAgentRecordInput>('ConversationsAgent'), // "Conversations Agent"
   collaborateurs: createTableClient<CollaborateursRecordType, CollaborateursRecordInput>('Collaborateurs'), // "Collaborateurs"
+  utilisateurs: createTableClient<UtilisateursRecordType, UtilisateursRecordInput>('Utilisateurs'), // "Utilisateurs"
+  parametres: createTableClient<ParametresRecordType, ParametresRecordInput>('Parametres'), // "Paramètres"
   sql: createSqlClient(),
   auth: createAuthClient<ZiteAuthUser>(),
 };

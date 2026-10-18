@@ -31,6 +31,12 @@ import type { default as _SaveReservationEp } from '../src/api/saveReservation';
 import type { default as _SaveSortieEp } from '../src/api/saveSortie';
 import type { default as _SaveStockEp } from '../src/api/saveStock';
 import type { default as _VoiceAgentEp } from '../src/api/voiceAgent';
+import type { default as _GetUtilisateursEp } from '../src/api/getUtilisateurs';
+import type { default as _SaveUtilisateurEp } from '../src/api/saveUtilisateur';
+import type { default as _DeleteUtilisateurEp } from '../src/api/deleteUtilisateur';
+import type { default as _GetParametresEp } from '../src/api/getParametres';
+import type { default as _SaveParametresEp } from '../src/api/saveParametres';
+import type { default as _SetProfilActifEp } from '../src/api/setProfilActif';
 
 type _DeleteCampagneCfg = typeof _DeleteCampagneEp;
 export type DeleteCampagneInputType = NonNullable<_DeleteCampagneCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_DeleteCampagneCfg['execute']>[0]['input'];
@@ -209,3 +215,33 @@ export const api = {
   saveStock,
   voiceAgent,
 };
+
+type _GetUtilisateursCfg = typeof _GetUtilisateursEp;
+export type GetUtilisateursInputType = NonNullable<_GetUtilisateursCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_GetUtilisateursCfg['execute']>[0]['input'];
+export type GetUtilisateursOutputType = Awaited<ReturnType<_GetUtilisateursCfg['execute']>>;
+export const getUtilisateurs = createCaller<GetUtilisateursInputType, GetUtilisateursOutputType>('getUtilisateurs');
+
+type _SaveUtilisateurCfg = typeof _SaveUtilisateurEp;
+export type SaveUtilisateurInputType = NonNullable<_SaveUtilisateurCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_SaveUtilisateurCfg['execute']>[0]['input'];
+export type SaveUtilisateurOutputType = Awaited<ReturnType<_SaveUtilisateurCfg['execute']>>;
+export const saveUtilisateur = createCaller<SaveUtilisateurInputType, SaveUtilisateurOutputType>('saveUtilisateur');
+
+type _DeleteUtilisateurCfg = typeof _DeleteUtilisateurEp;
+export type DeleteUtilisateurInputType = NonNullable<_DeleteUtilisateurCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_DeleteUtilisateurCfg['execute']>[0]['input'];
+export type DeleteUtilisateurOutputType = Awaited<ReturnType<_DeleteUtilisateurCfg['execute']>>;
+export const deleteUtilisateur = createCaller<DeleteUtilisateurInputType, DeleteUtilisateurOutputType>('deleteUtilisateur');
+
+type _GetParametresCfg = typeof _GetParametresEp;
+export type GetParametresInputType = NonNullable<_GetParametresCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_GetParametresCfg['execute']>[0]['input'];
+export type GetParametresOutputType = Awaited<ReturnType<_GetParametresCfg['execute']>>;
+export const getParametres = createCaller<GetParametresInputType, GetParametresOutputType>('getParametres');
+
+type _SaveParametresCfg = typeof _SaveParametresEp;
+export type SaveParametresInputType = NonNullable<_SaveParametresCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_SaveParametresCfg['execute']>[0]['input'];
+export type SaveParametresOutputType = Awaited<ReturnType<_SaveParametresCfg['execute']>>;
+export const saveParametres = createCaller<SaveParametresInputType, SaveParametresOutputType>('saveParametres');
+
+type _SetProfilActifCfg = typeof _SetProfilActifEp;
+export type SetProfilActifInputType = NonNullable<_SetProfilActifCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_SetProfilActifCfg['execute']>[0]['input'];
+export type SetProfilActifOutputType = Awaited<ReturnType<_SetProfilActifCfg['execute']>>;
+export const setProfilActif = createCaller<SetProfilActifInputType, SetProfilActifOutputType>('setProfilActif');

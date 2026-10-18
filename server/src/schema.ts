@@ -203,6 +203,34 @@ export const TABLES: Record<string, TableSchema> = {
       dateAjout: "created_at", // Date Ajout
     },
   },
+  // --- Tables ajoutées pour la version autonome (absentes du projet Zite) ---
+  Utilisateurs: {
+    className: "Utilisateurs",
+    tableId: "local-utilisateurs",
+    name: "Utilisateurs",
+    primaryField: "nomComplet",
+    fields: {
+      nomComplet: "single_line_text", // Nom Complet
+      email: "email", // Email
+      telephone: "phone_number", // Téléphone
+      profil: "single_select", // Profil
+      statut: "single_select", // Statut
+      notes: "long_text", // Notes
+      derniereConnexion: "date", // Dernière Connexion
+      dateCreation: "created_at", // Date Création
+    },
+  },
+  Parametres: {
+    className: "Parametres",
+    tableId: "local-parametres",
+    name: "Paramètres",
+    primaryField: "cle",
+    fields: {
+      cle: "single_line_text", // Clé
+      valeur: "long_text", // Valeur (JSON)
+      dateMiseAJour: "updated_at", // Dernière Mise à Jour
+    },
+  },
 };
 
 export const classNameForTableId = (tableId: string): string | undefined =>

@@ -187,7 +187,10 @@ export class Store {
     params: { id?: string; filters?: Record<string, any>; fields?: string[] } = {},
   ) {
     const rows = this.rows(table);
-    const found = params.id
+    // Un `id` fourni (même vide) doit correspondre exactement : sinon un
+    // identifiant vide renverrait le premier enregistrement de la table.
+    const parId = Object.prototype.hasOwnProperty.call(params, 'id');
+    const found = parId
       ? rows.find((row) => row.id === params.id)
       : rows.find((row) => matchesFilters(row, params.filters));
     return found ? project(found, params.fields) : undefined;
@@ -257,6 +260,11 @@ export class Store {
   replaceTable(table: string, rows: Row[]) {
     this.db.tables[table] = rows;
     this.persist();
+  }
+
+  /** Copie complète de la base (sauvegarde / export). */
+  snapshot() {
+    return JSON.parse(JSON.stringify(this.db));
   }
 
   stats() {

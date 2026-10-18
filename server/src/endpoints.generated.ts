@@ -8,27 +8,33 @@ import ep4 from '../../apps/adcampaign-manager/src/api/deleteFacture';
 import ep5 from '../../apps/adcampaign-manager/src/api/deleteImpression';
 import ep6 from '../../apps/adcampaign-manager/src/api/deleteReservation';
 import ep7 from '../../apps/adcampaign-manager/src/api/deleteStock';
-import ep8 from '../../apps/adcampaign-manager/src/api/getCampagnes';
-import ep9 from '../../apps/adcampaign-manager/src/api/getClients';
-import ep10 from '../../apps/adcampaign-manager/src/api/getCollaborateurs';
-import ep11 from '../../apps/adcampaign-manager/src/api/getDashboard';
-import ep12 from '../../apps/adcampaign-manager/src/api/getEmplacements';
-import ep13 from '../../apps/adcampaign-manager/src/api/getFactures';
-import ep14 from '../../apps/adcampaign-manager/src/api/getImpressions';
-import ep15 from '../../apps/adcampaign-manager/src/api/getReports';
-import ep16 from '../../apps/adcampaign-manager/src/api/getReservations';
-import ep17 from '../../apps/adcampaign-manager/src/api/getSorties';
-import ep18 from '../../apps/adcampaign-manager/src/api/getStock';
-import ep19 from '../../apps/adcampaign-manager/src/api/saveCampagne';
-import ep20 from '../../apps/adcampaign-manager/src/api/saveClient';
-import ep21 from '../../apps/adcampaign-manager/src/api/saveCollaborateur';
-import ep22 from '../../apps/adcampaign-manager/src/api/saveEmplacement';
-import ep23 from '../../apps/adcampaign-manager/src/api/saveFacture';
-import ep24 from '../../apps/adcampaign-manager/src/api/saveImpression';
-import ep25 from '../../apps/adcampaign-manager/src/api/saveReservation';
-import ep26 from '../../apps/adcampaign-manager/src/api/saveSortie';
-import ep27 from '../../apps/adcampaign-manager/src/api/saveStock';
-import ep28 from '../../apps/adcampaign-manager/src/api/voiceAgent';
+import ep8 from '../../apps/adcampaign-manager/src/api/deleteUtilisateur';
+import ep9 from '../../apps/adcampaign-manager/src/api/getCampagnes';
+import ep10 from '../../apps/adcampaign-manager/src/api/getClients';
+import ep11 from '../../apps/adcampaign-manager/src/api/getCollaborateurs';
+import ep12 from '../../apps/adcampaign-manager/src/api/getDashboard';
+import ep13 from '../../apps/adcampaign-manager/src/api/getEmplacements';
+import ep14 from '../../apps/adcampaign-manager/src/api/getFactures';
+import ep15 from '../../apps/adcampaign-manager/src/api/getImpressions';
+import ep16 from '../../apps/adcampaign-manager/src/api/getParametres';
+import ep17 from '../../apps/adcampaign-manager/src/api/getReports';
+import ep18 from '../../apps/adcampaign-manager/src/api/getReservations';
+import ep19 from '../../apps/adcampaign-manager/src/api/getSorties';
+import ep20 from '../../apps/adcampaign-manager/src/api/getStock';
+import ep21 from '../../apps/adcampaign-manager/src/api/getUtilisateurs';
+import ep22 from '../../apps/adcampaign-manager/src/api/saveCampagne';
+import ep23 from '../../apps/adcampaign-manager/src/api/saveClient';
+import ep24 from '../../apps/adcampaign-manager/src/api/saveCollaborateur';
+import ep25 from '../../apps/adcampaign-manager/src/api/saveEmplacement';
+import ep26 from '../../apps/adcampaign-manager/src/api/saveFacture';
+import ep27 from '../../apps/adcampaign-manager/src/api/saveImpression';
+import ep28 from '../../apps/adcampaign-manager/src/api/saveParametres';
+import ep29 from '../../apps/adcampaign-manager/src/api/saveReservation';
+import ep30 from '../../apps/adcampaign-manager/src/api/saveSortie';
+import ep31 from '../../apps/adcampaign-manager/src/api/saveStock';
+import ep32 from '../../apps/adcampaign-manager/src/api/saveUtilisateur';
+import ep33 from '../../apps/adcampaign-manager/src/api/setProfilActif';
+import ep34 from '../../apps/adcampaign-manager/src/api/voiceAgent';
 
 export const endpoints: Record<string, any> = {
   deleteCampagne: ep0,
@@ -39,25 +45,31 @@ export const endpoints: Record<string, any> = {
   deleteImpression: ep5,
   deleteReservation: ep6,
   deleteStock: ep7,
-  getCampagnes: ep8,
-  getClients: ep9,
-  getCollaborateurs: ep10,
-  getDashboard: ep11,
-  getEmplacements: ep12,
-  getFactures: ep13,
-  getImpressions: ep14,
-  getReports: ep15,
-  getReservations: ep16,
-  getSorties: ep17,
-  getStock: ep18,
-  saveCampagne: ep19,
-  saveClient: ep20,
-  saveCollaborateur: ep21,
-  saveEmplacement: ep22,
-  saveFacture: ep23,
-  saveImpression: ep24,
-  saveReservation: ep25,
-  saveSortie: ep26,
-  saveStock: ep27,
-  voiceAgent: ep28,
+  deleteUtilisateur: ep8,
+  getCampagnes: ep9,
+  getClients: ep10,
+  getCollaborateurs: ep11,
+  getDashboard: ep12,
+  getEmplacements: ep13,
+  getFactures: ep14,
+  getImpressions: ep15,
+  getParametres: ep16,
+  getReports: ep17,
+  getReservations: ep18,
+  getSorties: ep19,
+  getStock: ep20,
+  getUtilisateurs: ep21,
+  saveCampagne: ep22,
+  saveClient: ep23,
+  saveCollaborateur: ep24,
+  saveEmplacement: ep25,
+  saveFacture: ep26,
+  saveImpression: ep27,
+  saveParametres: ep28,
+  saveReservation: ep29,
+  saveSortie: ep30,
+  saveStock: ep31,
+  saveUtilisateur: ep32,
+  setProfilActif: ep33,
+  voiceAgent: ep34,
 };

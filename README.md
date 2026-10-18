@@ -2,7 +2,7 @@
 
 **Application de gestion pour régie publicitaire** : campagnes, clients, emplacements,
 réservations, travaux & impressions, facturation, stock, collaborateurs, rapports et
-assistant vocal.
+assistant vocal — avec **gestion des utilisateurs par profil** et **droits d'accès par module**.
 
 [![CI](https://github.com/Bah624/direct-dialog/actions/workflows/ci.yml/badge.svg)](https://github.com/Bah624/direct-dialog/actions/workflows/ci.yml)
 [![Release](https://github.com/Bah624/direct-dialog/actions/workflows/release.yml/badge.svg)](https://github.com/Bah624/direct-dialog/actions/workflows/release.yml)
@@ -84,6 +84,48 @@ yarn build && yarn start     # http://localhost:8080
 
 > Docker et l'instance locale utilisent le même port 8080 : arrêter l'un avant de lancer
 > l'autre (`docker compose down` ou `pkill -f "server/dist/server.mjs"`).
+
+---
+
+## Paramètres, utilisateurs et rôles (v1.1)
+
+Un module **Paramètres** est accessible depuis la barre latérale, avec quatre onglets :
+
+| Onglet | Contenu |
+|---|---|
+| **Général** | Identité de la société (nom, slogan, adresse, téléphone, e-mail, logo), devise et taux de TVA par défaut |
+| **Utilisateurs** | Création, modification et suppression des comptes : nom, e-mail, téléphone, profil, statut, notes |
+| **Rôles & accès** | Matrice des droits par profil : pour chaque module, autoriser « Voir » et/ou « Gérer » |
+| **Système** | Version, profil actif, volumes de données, sauvegarde JSON téléchargeable |
+
+### Profils disponibles
+
+Administrateur · Directeur général · Comptable · RH · Responsable des opérations ·
+Responsable technique · Assistante de direction · Commercial · Graphiste · Machiniste ·
+Chef d'atelier
+
+Chaque profil reçoit par défaut un périmètre cohérent (le comptable gère la facturation, le
+machiniste voit les travaux, le DG consulte tout et ne valide que les campagnes…). Tout est
+modifiable dans **Rôles & accès**.
+
+### Fonctionnement
+
+- Le **profil actif** se choisit en bas de la barre latérale (sélecteur visible dès qu'il y a
+  plusieurs comptes actifs). Il s'applique immédiatement à l'interface **et** aux appels API.
+- Le menu latéral ne montre que les modules autorisés ; un accès direct par URL affiche
+  « Accès non autorisé ».
+- Les contrôles sont aussi appliqués **côté serveur** : un endpoint refusé renvoie `403`, y
+  compris si l'on appelle l'API directement.
+- Le profil **Administrateur** conserve toujours l'accès complet et ne peut pas être
+  supprimé, rétrogradé ou désactivé s'il est le dernier.
+- Au premier démarrage, un profil `Administrateur` est créé automatiquement
+  (`admin@direct-dialog.local`) ; vous pouvez le renommer puis créer les comptes de votre
+  équipe.
+
+> **À noter** : il n'y a pas encore de mot de passe. Le profil actif est un réglage serveur
+> (application mono-utilisateur) : il structure les droits et l'interface, mais ne constitue
+> pas encore une barrière d'authentification. La prochaine étape est la connexion nominative
+> (mot de passe + sessions), le modèle de données étant déjà en place.
 
 ---
 
@@ -181,6 +223,9 @@ ZITE_OPENAI_ACCESS_TOKEN=sk-... docker compose up -d
 | E-mail de validation de campagne | `emailsSent: 1`, archivé dans `outbox.jsonl` |
 | Redémarrage du conteneur | données et fichiers conservés |
 | `curl /healthz` | `{"status":"ok", …}` |
+| Création d'utilisateur + changement de profil | menu filtré (machiniste → Tableau de bord + Travaux) |
+| Contrôle d'accès serveur | `getFactures` / `saveParametres` → `403` avec le profil Machiniste |
+| Page Paramètres | 4 onglets, 13 modules × 11 profils de droits |
 
 ---
 
@@ -190,8 +235,8 @@ ZITE_OPENAI_ACCESS_TOKEN=sk-... docker compose up -d
 |---|---|
 | Source | projet Zite `8149a78247083f41` (application `ip2kuase4w`), 127 fichiers, `headSha 7c39eeae` |
 | Frontend | React 18 + TypeScript + Vite + Tailwind + shadcn/ui |
-| Métier | 29 endpoints (`src/api/*.ts`) |
-| Base | 10 tables (`zite.schema.json`) |
+| Métier | 29 endpoints d'origine + 6 ajoutés (`src/api/*.ts`) |
+| Base | 10 tables d'origine (`zite.schema.json`) + 2 locales (`Utilisateurs`, `Parametres`) |
 | Données | 38 enregistrements réels exportés (2 clients, 9 campagnes, 3 emplacements, 6 réservations, 3 impressions, 5 factures, 1 article, 5 sorties, 3 conversations, 1 collaborateur) |
 
 Trois fichiers d'origine ont été adaptés (vérifiable par diff avec la source Zite) :
@@ -209,7 +254,9 @@ d'envoi de fichiers.
 
 ## Limites connues (version de test)
 
-- **Pas d'authentification** : l'application est ouverte à qui accède au port 8080.
+- **Pas encore de mot de passe** : le profil actif structure les droits et l'interface, mais
+  ne constitue pas une barrière d'authentification. Connexion nominative prévue à l'étape
+  suivante (le modèle utilisateurs est en place).
 - **Mono-utilisateur** : stockage JSON réécrit à chaque modification (à remplacer par
   PostgreSQL ou SQLite pour une exploitation multi-postes).
 - **E-mails non expédiés**, intégrations tierces désactivées (Stripe, Google Maps…), non

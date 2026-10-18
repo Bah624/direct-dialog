@@ -11,8 +11,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { bootstrap } from './bootstrap';
+import { autoriser } from './access';
+import { settings } from './settings';
 
-const { store, dataDir } = bootstrap();
+const { store, dataDir } = await bootstrap();
 
 // Les endpoints sont chargés après bootstrap (voir bootstrap.ts).
 const { endpoints }: { endpoints: Record<string, any> } = await import('./endpoints.generated');
@@ -23,7 +25,7 @@ const PORT = Number(process.env.PORT || 8080);
 // `dist/` de Vite quand on lance le serveur depuis le dépôt.
 function resolvePublicDir(): string {
   const candidates = [
-    process.env.PUBLIC_DIR,
+    process.env.PUBLIC_DIR ? path.resolve(process.env.PUBLIC_DIR) : undefined,
     path.resolve(process.cwd(), 'public'),
     path.resolve(process.cwd(), 'apps/adcampaign-manager/dist'),
     path.resolve(process.cwd(), '../apps/adcampaign-manager/dist'),
@@ -45,7 +47,7 @@ app.use(express.json({ limit: '50mb' }));
 // ---------------------------------------------------------------------------
 const localUser = {
   id: 'local-user',
-  email: process.env.LOCAL_USER_EMAIL || 'local@hairness.local',
+  email: process.env.LOCAL_USER_EMAIL || 'local@direct-dialog.local',
   roles: [] as { id: string }[],
 };
 
@@ -112,6 +114,21 @@ app.get('/files/:token/:filename', (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// Sauvegarde des données
+// ---------------------------------------------------------------------------
+app.get('/api/export', async (_req, res) => {
+  const verdict = await autoriser('exportDonnees');
+  if (!verdict.autorise) {
+    res.status(403).json({ message: verdict.message });
+    return;
+  }
+  const nom = `direct-dialog-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`;
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${nom}"`);
+  res.send(JSON.stringify(store.snapshot(), null, 1));
+});
+
+// ---------------------------------------------------------------------------
 // Exécution des endpoints de l'application
 // ---------------------------------------------------------------------------
 app.post('/api/:name', async (req, res) => {
@@ -120,6 +137,12 @@ app.post('/api/:name', async (req, res) => {
 
   if (!endpoint || typeof endpoint.execute !== 'function') {
     res.status(404).json({ message: `Endpoint inconnu : ${name}` });
+    return;
+  }
+
+  const verdict = await autoriser(name);
+  if (!verdict.autorise) {
+    res.status(403).json({ message: verdict.message, code: 'FORBIDDEN' });
     return;
   }
 
@@ -169,7 +192,7 @@ if (fs.existsSync(path.join(PUBLIC_DIR, 'index.html'))) {
 }
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[hairness-app] serveur local prêt sur http://localhost:${PORT}`);
-  console.log(`[hairness-app] données : ${dataDir}/db.json`);
-  console.log(`[hairness-app] endpoints : ${Object.keys(endpoints).length}`);
+  console.log(`[direct-dialog] serveur local prêt sur http://localhost:${PORT}`);
+  console.log(`[direct-dialog] données : ${dataDir}/db.json`);
+  console.log(`[direct-dialog] endpoints : ${Object.keys(endpoints).length}`);
 });

@@ -1,16 +1,20 @@
 // Démarrage du runtime local avant le chargement des endpoints.
 //
-// Deux choses doivent être en place AVANT que les modules d'endpoint soient
+// Trois choses doivent être en place AVANT que les modules d'endpoint soient
 // évalués :
 //   1. les variables d'environnement attendues par le code d'origine ;
 //   2. `globalThis.__wrapSdkCall`, le point d'entrée que le SDK `zitejs`
-//      utilise pour accéder à la base de données.
+//      utilise pour accéder à la base de données ;
+//   3. les données de base : profil administrateur, société, droits.
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { zite } from 'zitejs/db';
 import { Store } from './store';
 import { createSdkBridge } from './sdk-bridge';
 import { createEmailSender } from './email';
+import { settings, DEFAULT_SOCIETE } from './settings';
+import { DEFAULT_PERMISSIONS } from './permissions';
 import seed from '../data/seed.json';
 
 export type Runtime = {
@@ -18,7 +22,7 @@ export type Runtime = {
   dataDir: string;
 };
 
-export function bootstrap(): Runtime {
+export async function bootstrap(): Promise<Runtime> {
   const dataDir = path.resolve(process.env.DATA_DIR || path.join(process.cwd(), 'data'));
   fs.mkdirSync(dataDir, { recursive: true });
 
@@ -33,5 +37,42 @@ export function bootstrap(): Runtime {
 
   (globalThis as any).__wrapSdkCall = createSdkBridge({ store, sendEmail });
 
+  await seedDefaults();
+
   return { store, dataDir };
+}
+
+/**
+ * Données indispensables au premier démarrage : un profil administrateur, la
+ * fiche société et la matrice de droits par défaut.
+ */
+async function seedDefaults() {
+  const { records } = await zite.utilisateurs.findAll({ limit: 10 });
+
+  let administrateur = records[0];
+  if (!administrateur) {
+    administrateur = await zite.utilisateurs.create({
+      record: {
+        nomComplet: process.env.ADMIN_NOM || 'Administrateur',
+        email: process.env.ADMIN_EMAIL || 'admin@direct-dialog.local',
+        telephone: '',
+        profil: 'Administrateur',
+        statut: 'Actif',
+        notes: 'Profil créé automatiquement à l’installation.',
+      },
+    });
+    console.log(
+      `[direct-dialog] profil administrateur créé : ${administrateur.email} (id ${administrateur.id})`,
+    );
+  }
+
+  if (!(await settings.profilActifId())) {
+    await settings.set('profilActifId', administrateur.id);
+  }
+  if (!(await settings.get('permissions', null))) {
+    await settings.set('permissions', DEFAULT_PERMISSIONS);
+  }
+  if (!(await settings.get('societe', null))) {
+    await settings.set('societe', DEFAULT_SOCIETE);
+  }
 }
