@@ -1,0 +1,17 @@
+{
+  "project": {
+    "name": "AdCampaign Manager",
+    "basePublicIdentifier": "8149a78247083f41"
+  },
+  "integrations": {
+    "openai": {
+      "type": "openai",
+      "connectionId": "svc_432267"
+    },
+    "email": {
+      "type": "email",
+      "connectionId": "svc_231190",
+      "provider": "gmail"
+    }
+  }
+}

@@ -1,0 +1,1524 @@
+{
+  "tables": [
+    {
+      "id": "tdgTB8sbH18",
+      "sdkName": "clients",
+      "name": "Clients",
+      "primaryFieldId": "fxeUH8CdZp5",
+      "fields": [
+        {
+          "id": "fxeUH8CdZp5",
+          "sdkName": "nomClient",
+          "definition": {
+            "name": "Nom Client",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fifEFmGv9C9",
+          "sdkName": "email",
+          "definition": {
+            "name": "Email",
+            "type": "email",
+            "template": {}
+          }
+        },
+        {
+          "id": "fnWFpLE7BLe",
+          "sdkName": "telephone",
+          "definition": {
+            "name": "Téléphone",
+            "type": "phone_number",
+            "template": {}
+          }
+        },
+        {
+          "id": "fhjRzmM7hws",
+          "sdkName": "adresse",
+          "definition": {
+            "name": "Adresse",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fdRnCE9FLVW",
+          "sdkName": "secteurDactivite",
+          "definition": {
+            "name": "Secteur d'activité",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "ffH1hhm1eUo",
+          "sdkName": "statut",
+          "definition": {
+            "name": "Statut",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "oKoL",
+                  "label": "Actif",
+                  "color": "green"
+                },
+                {
+                  "value": "cG9B",
+                  "label": "Inactif",
+                  "color": "gray"
+                },
+                {
+                  "value": "3CtW",
+                  "label": "Prospect",
+                  "color": "blue"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "fiFYawwH3im",
+          "sdkName": "dateCreation",
+          "definition": {
+            "name": "Date création",
+            "type": "created_at",
+            "template": {
+              "timezone": "",
+              "dateFormat": "local",
+              "timeFormat": "12h",
+              "displayTimeZone": false
+            }
+          }
+        },
+        {
+          "id": "ftbyRtcrkXP",
+          "sdkName": "campagnes",
+          "definition": {
+            "name": "Campagnes",
+            "type": "linked_record",
+            "template": {
+              "tableId": "t7KrvKz7WXL",
+              "isInverse": true,
+              "allowMultiple": false,
+              "inverseFieldId": "f6D5jT5zGUs"
+            }
+          }
+        },
+        {
+          "id": "f7wZmxY7yt3",
+          "sdkName": "fichiers",
+          "definition": {
+            "name": "fichiers",
+            "type": "attachments",
+            "template": {}
+          }
+        },
+        {
+          "id": "fepUe6tM7Zt",
+          "sdkName": "factures",
+          "definition": {
+            "name": "Factures",
+            "type": "linked_record",
+            "template": {
+              "tableId": "tjyyX5N4bHc",
+              "isInverse": true,
+              "allowMultiple": false,
+              "inverseFieldId": "f5zZJTNiQ3e"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tqGkzciPwXe",
+      "sdkName": "emplacements",
+      "name": "Emplacements",
+      "primaryFieldId": "fpztb9faANw",
+      "fields": [
+        {
+          "id": "fpztb9faANw",
+          "sdkName": "referenceEmplacement",
+          "definition": {
+            "name": "Référence Emplacement",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fuNjdk8KBMg",
+          "sdkName": "localisation",
+          "definition": {
+            "name": "Localisation",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fnpF4J954Vi",
+          "sdkName": "ville",
+          "definition": {
+            "name": "Ville",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f2tdv466iaw",
+          "sdkName": "type",
+          "definition": {
+            "name": "Type",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "hbao",
+                  "label": "Panneau",
+                  "color": "blue"
+                },
+                {
+                  "value": "4Gvk",
+                  "label": "Affichage Urbain",
+                  "color": "purple"
+                },
+                {
+                  "value": "k48i",
+                  "label": "Billboard",
+                  "color": "orange"
+                },
+                {
+                  "value": "6suJ",
+                  "label": "Abribus",
+                  "color": "teal"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "f1yHftPhdQe",
+          "sdkName": "format",
+          "definition": {
+            "name": "Format",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fmreNxkAohM",
+          "sdkName": "prixParSemaine",
+          "definition": {
+            "name": "Prix par Semaine",
+            "type": "currency",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 2,
+              "currencySymbol": "€"
+            }
+          }
+        },
+        {
+          "id": "f5SA5rvoUa1",
+          "sdkName": "disponibilite",
+          "definition": {
+            "name": "Disponibilité",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "qrhR",
+                  "label": "Disponible",
+                  "color": "green"
+                },
+                {
+                  "value": "uGDx",
+                  "label": "Réservé",
+                  "color": "orange"
+                },
+                {
+                  "value": "pZLk",
+                  "label": "Occupé",
+                  "color": "red"
+                },
+                {
+                  "value": "nKtt",
+                  "label": "En maintenance",
+                  "color": "gray"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "f9aCvxdnZAD",
+          "sdkName": "photo",
+          "definition": {
+            "name": "Photo",
+            "type": "attachments",
+            "template": {}
+          }
+        },
+        {
+          "id": "fh5y4Uj23rY",
+          "sdkName": "reservations",
+          "definition": {
+            "name": "Réservations",
+            "type": "linked_record",
+            "template": {
+              "tableId": "tiVRbgFfnk1",
+              "isInverse": true,
+              "allowMultiple": false,
+              "inverseFieldId": "fa6JdmtSc6D"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "t7KrvKz7WXL",
+      "sdkName": "campagnes",
+      "name": "Campagnes",
+      "primaryFieldId": "fnNfMnkU2Mi",
+      "fields": [
+        {
+          "id": "fnNfMnkU2Mi",
+          "sdkName": "nomCampagne",
+          "definition": {
+            "name": "Nom Campagne",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f6D5jT5zGUs",
+          "sdkName": "client",
+          "definition": {
+            "name": "Client",
+            "type": "linked_record",
+            "template": {
+              "tableId": "tdgTB8sbH18",
+              "isInverse": false,
+              "allowMultiple": false,
+              "inverseFieldId": "ftbyRtcrkXP"
+            }
+          }
+        },
+        {
+          "id": "fu9FUsnNqVR",
+          "sdkName": "dateDebut",
+          "definition": {
+            "name": "Date Début",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "fiQHux7WN7W",
+          "sdkName": "dateFin",
+          "definition": {
+            "name": "Date Fin",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "faZz7oHua5S",
+          "sdkName": "statut",
+          "definition": {
+            "name": "Statut",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "2qWm",
+                  "label": "Brouillon",
+                  "color": "gray"
+                },
+                {
+                  "value": "ccEL",
+                  "label": "En attente",
+                  "color": "yellow"
+                },
+                {
+                  "value": "qtDU",
+                  "label": "Validée",
+                  "color": "blue"
+                },
+                {
+                  "value": "iaAN",
+                  "label": "En cours",
+                  "color": "green"
+                },
+                {
+                  "value": "wTuK",
+                  "label": "Terminée",
+                  "color": "purple"
+                },
+                {
+                  "value": "t4J8",
+                  "label": "Annulée",
+                  "color": "red"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "f8kxgKr5C4p",
+          "sdkName": "budgetTotal",
+          "definition": {
+            "name": "Budget Total",
+            "type": "currency",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 2,
+              "currencySymbol": "€"
+            }
+          }
+        },
+        {
+          "id": "f5rNwEEDP1s",
+          "sdkName": "validationCreation",
+          "definition": {
+            "name": "Validation Création",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "w9i7",
+                  "label": "En attente",
+                  "color": "yellow"
+                },
+                {
+                  "value": "iAwE",
+                  "label": "Validée",
+                  "color": "green"
+                },
+                {
+                  "value": "vGhv",
+                  "label": "Refusée",
+                  "color": "red"
+                },
+                {
+                  "value": "hhop",
+                  "label": "En révision",
+                  "color": "orange"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "fdWRiUM7GEm",
+          "sdkName": "description",
+          "definition": {
+            "name": "Description",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "ffKsEXX3ptN",
+          "sdkName": "commercialResponsable",
+          "definition": {
+            "name": "Commercial Responsable",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fgzLncZXmBg",
+          "sdkName": "fichiersCreations",
+          "definition": {
+            "name": "Fichiers Créations",
+            "type": "attachments",
+            "template": {}
+          }
+        },
+        {
+          "id": "fhjcnZWeyYx",
+          "sdkName": "dateCreation",
+          "definition": {
+            "name": "Date Création",
+            "type": "created_at",
+            "template": {
+              "timezone": "",
+              "dateFormat": "local",
+              "timeFormat": "12h",
+              "displayTimeZone": false
+            }
+          }
+        },
+        {
+          "id": "fcbbUZd1kNN",
+          "sdkName": "reservations",
+          "definition": {
+            "name": "Réservations",
+            "type": "linked_record",
+            "template": {
+              "tableId": "tiVRbgFfnk1",
+              "isInverse": true,
+              "allowMultiple": false,
+              "inverseFieldId": "ftWa4hPZm8n"
+            }
+          }
+        },
+        {
+          "id": "fe49Vk4fsFp",
+          "sdkName": "impressions",
+          "definition": {
+            "name": "Impressions",
+            "type": "linked_record",
+            "template": {
+              "tableId": "tgS7ehqzB9L",
+              "isInverse": true,
+              "allowMultiple": false,
+              "inverseFieldId": "fca1YAmdQYb"
+            }
+          }
+        },
+        {
+          "id": "fkVbbqvS4oQ",
+          "sdkName": "factures",
+          "definition": {
+            "name": "Factures",
+            "type": "linked_record",
+            "template": {
+              "tableId": "tjyyX5N4bHc",
+              "isInverse": true,
+              "allowMultiple": false,
+              "inverseFieldId": "f7Qjbr3RfpS"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tiVRbgFfnk1",
+      "sdkName": "reservations",
+      "name": "Réservations",
+      "primaryFieldId": "fsSMKzcdyPm",
+      "fields": [
+        {
+          "id": "fsSMKzcdyPm",
+          "sdkName": "referenceReservation",
+          "definition": {
+            "name": "Référence Réservation",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "ftWa4hPZm8n",
+          "sdkName": "campagne",
+          "definition": {
+            "name": "Campagne",
+            "type": "linked_record",
+            "template": {
+              "tableId": "t7KrvKz7WXL",
+              "isInverse": false,
+              "allowMultiple": false,
+              "inverseFieldId": "fcbbUZd1kNN"
+            }
+          }
+        },
+        {
+          "id": "fa6JdmtSc6D",
+          "sdkName": "emplacement",
+          "definition": {
+            "name": "Emplacement",
+            "type": "linked_record",
+            "template": {
+              "tableId": "tqGkzciPwXe",
+              "isInverse": false,
+              "allowMultiple": false,
+              "inverseFieldId": "fh5y4Uj23rY"
+            }
+          }
+        },
+        {
+          "id": "ffFDrtTyP2o",
+          "sdkName": "dateDebut",
+          "definition": {
+            "name": "Date Début",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "fhem9VQh2Nm",
+          "sdkName": "dateFin",
+          "definition": {
+            "name": "Date Fin",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "fmoawLUYMCk",
+          "sdkName": "statut",
+          "definition": {
+            "name": "Statut",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "g6hz",
+                  "label": "Confirmée",
+                  "color": "green"
+                },
+                {
+                  "value": "n8cn",
+                  "label": "En attente",
+                  "color": "yellow"
+                },
+                {
+                  "value": "bVkT",
+                  "label": "Annulée",
+                  "color": "red"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "fkrJqKUmE98",
+          "sdkName": "montant",
+          "definition": {
+            "name": "Montant",
+            "type": "currency",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 2,
+              "currencySymbol": "€"
+            }
+          }
+        },
+        {
+          "id": "fjxpnReSnNP",
+          "sdkName": "dateReservation",
+          "definition": {
+            "name": "Date Réservation",
+            "type": "created_at",
+            "template": {
+              "timezone": "",
+              "dateFormat": "local",
+              "timeFormat": "12h",
+              "displayTimeZone": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tgS7ehqzB9L",
+      "sdkName": "impressions",
+      "name": "Impressions",
+      "primaryFieldId": "f6GWWayyLEv",
+      "fields": [
+        {
+          "id": "f6GWWayyLEv",
+          "sdkName": "referenceImpression",
+          "definition": {
+            "name": "Référence Impression",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fca1YAmdQYb",
+          "sdkName": "campagne",
+          "definition": {
+            "name": "Campagne",
+            "type": "linked_record",
+            "template": {
+              "tableId": "t7KrvKz7WXL",
+              "isInverse": false,
+              "allowMultiple": false,
+              "inverseFieldId": "fe49Vk4fsFp"
+            }
+          }
+        },
+        {
+          "id": "fmn6khdK55j",
+          "sdkName": "datePlanifiee",
+          "definition": {
+            "name": "Date Planifiée",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "fdGuT3Vu6g7",
+          "sdkName": "dateRealisation",
+          "definition": {
+            "name": "Date Réalisation",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "fd9VarH7xtx",
+          "sdkName": "statut",
+          "definition": {
+            "name": "Statut",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "cYKH",
+                  "label": "Planifiée",
+                  "color": "blue"
+                },
+                {
+                  "value": "hjRx",
+                  "label": "En cours",
+                  "color": "yellow"
+                },
+                {
+                  "value": "stPT",
+                  "label": "Terminée",
+                  "color": "green"
+                },
+                {
+                  "value": "kbsZ",
+                  "label": "Annulée",
+                  "color": "red"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "fexbVrwpSZf",
+          "sdkName": "formatImpression",
+          "definition": {
+            "name": "Format Impression",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f6LEGHPjq5X",
+          "sdkName": "quantite",
+          "definition": {
+            "name": "Quantité",
+            "type": "number",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 1
+            }
+          }
+        },
+        {
+          "id": "fnMts3oAwHd",
+          "sdkName": "machinisteAssigne",
+          "definition": {
+            "name": "Machiniste Assigné",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "frf2uJzGxg1",
+          "sdkName": "chefAtelier",
+          "definition": {
+            "name": "Chef Atelier",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fcmcKDM45q1",
+          "sdkName": "notes",
+          "definition": {
+            "name": "Notes",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f4zPDkSAxvK",
+          "sdkName": "batFichier",
+          "definition": {
+            "name": "BAT / Fichier",
+            "type": "attachments",
+            "template": {}
+          }
+        },
+        {
+          "id": "f4qVBUYQrD5",
+          "sdkName": "typeDeTravaux",
+          "definition": {
+            "name": "Type de travaux",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "gXuc",
+                  "label": "Impression",
+                  "color": "blue"
+                },
+                {
+                  "value": "g9pG",
+                  "label": "Affichage",
+                  "color": "green"
+                },
+                {
+                  "value": "ffqv",
+                  "label": "Branding",
+                  "color": "purple"
+                },
+                {
+                  "value": "jLto",
+                  "label": "Soudure",
+                  "color": "orange"
+                },
+                {
+                  "value": "3Vws",
+                  "label": "Décapoter (retrait vinyle)",
+                  "color": "red"
+                },
+                {
+                  "value": "fHi6",
+                  "label": "Pose de vinyle",
+                  "color": "teal"
+                },
+                {
+                  "value": "8uTf",
+                  "label": "Installation panneau",
+                  "color": "indigo"
+                },
+                {
+                  "value": "m3RG",
+                  "label": "Maintenance / Réparation",
+                  "color": "gray"
+                },
+                {
+                  "value": "qqdb",
+                  "label": "Retouche & finition",
+                  "color": "pink"
+                },
+                {
+                  "value": "fad3",
+                  "label": "Autre",
+                  "color": "yellow"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tjyyX5N4bHc",
+      "sdkName": "factures",
+      "name": "Factures",
+      "primaryFieldId": "fxrcvdweBRr",
+      "fields": [
+        {
+          "id": "fxrcvdweBRr",
+          "sdkName": "numeroFacture",
+          "definition": {
+            "name": "Numéro Facture",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f5zZJTNiQ3e",
+          "sdkName": "client",
+          "definition": {
+            "name": "Client",
+            "type": "linked_record",
+            "template": {
+              "tableId": "tdgTB8sbH18",
+              "isInverse": false,
+              "allowMultiple": false,
+              "inverseFieldId": "fepUe6tM7Zt"
+            }
+          }
+        },
+        {
+          "id": "f7Qjbr3RfpS",
+          "sdkName": "campagne",
+          "definition": {
+            "name": "Campagne",
+            "type": "linked_record",
+            "template": {
+              "tableId": "t7KrvKz7WXL",
+              "isInverse": false,
+              "allowMultiple": false,
+              "inverseFieldId": "fkVbbqvS4oQ"
+            }
+          }
+        },
+        {
+          "id": "fhwRNQ9XgfY",
+          "sdkName": "dateEmission",
+          "definition": {
+            "name": "Date Émission",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "frb4fszARFj",
+          "sdkName": "dateEcheance",
+          "definition": {
+            "name": "Date Échéance",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "fep7NpuQbbd",
+          "sdkName": "montantHt",
+          "definition": {
+            "name": "Montant HT",
+            "type": "currency",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 2,
+              "currencySymbol": "€"
+            }
+          }
+        },
+        {
+          "id": "f9svJbRMSBy",
+          "sdkName": "tva",
+          "definition": {
+            "name": "TVA",
+            "type": "currency",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 2,
+              "currencySymbol": "€"
+            }
+          }
+        },
+        {
+          "id": "fvyirTkrHJr",
+          "sdkName": "montantTtc",
+          "definition": {
+            "name": "Montant TTC",
+            "type": "currency",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 2,
+              "currencySymbol": "€"
+            }
+          }
+        },
+        {
+          "id": "f84pHAPymRW",
+          "sdkName": "statutPaiement",
+          "definition": {
+            "name": "Statut Paiement",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "5wmF",
+                  "label": "Brouillon",
+                  "color": "gray"
+                },
+                {
+                  "value": "xmrb",
+                  "label": "Envoyée",
+                  "color": "blue"
+                },
+                {
+                  "value": "q2KC",
+                  "label": "Payée",
+                  "color": "green"
+                },
+                {
+                  "value": "fv6C",
+                  "label": "En retard",
+                  "color": "red"
+                },
+                {
+                  "value": "iBr8",
+                  "label": "Partiellement payée",
+                  "color": "orange"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "fc3uiiBgp7L",
+          "sdkName": "notes",
+          "definition": {
+            "name": "Notes",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f1YTE4DEKcR",
+          "sdkName": "dateCreation",
+          "definition": {
+            "name": "Date Création",
+            "type": "created_at",
+            "template": {
+              "timezone": "",
+              "dateFormat": "local",
+              "timeFormat": "12h",
+              "displayTimeZone": false
+            }
+          }
+        },
+        {
+          "id": "f9JqDXjNpPP",
+          "sdkName": "piecesJointes",
+          "definition": {
+            "name": "Pièces Jointes",
+            "type": "attachments",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "t6kzB3ax6wZ",
+      "sdkName": "stock",
+      "name": "Stock",
+      "primaryFieldId": "fgxZvfc1bbj",
+      "fields": [
+        {
+          "id": "fgxZvfc1bbj",
+          "sdkName": "referenceArticle",
+          "definition": {
+            "name": "Référence Article",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fvLy3NxTLgN",
+          "sdkName": "nomArticle",
+          "definition": {
+            "name": "Nom Article",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f9vUZ8oXmaM",
+          "sdkName": "categorie",
+          "definition": {
+            "name": "Catégorie",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "gFsD",
+                  "label": "Vinyle",
+                  "color": "blue"
+                },
+                {
+                  "value": "f7m6",
+                  "label": "Encre",
+                  "color": "purple"
+                },
+                {
+                  "value": "uRtQ",
+                  "label": "Papier grand format",
+                  "color": "sky"
+                },
+                {
+                  "value": "r95V",
+                  "label": "Solvant & produits chimiques",
+                  "color": "orange"
+                },
+                {
+                  "value": "rP8A",
+                  "label": "Outillage",
+                  "color": "gray"
+                },
+                {
+                  "value": "mgL4",
+                  "label": "Profilé & structure",
+                  "color": "indigo"
+                },
+                {
+                  "value": "cAs5",
+                  "label": "Visserie & fixation",
+                  "color": "teal"
+                },
+                {
+                  "value": "4iG6",
+                  "label": "Autre",
+                  "color": "pink"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "fxar2XNWtHr",
+          "sdkName": "unite",
+          "definition": {
+            "name": "Unité",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "xtvP",
+                  "label": "m²",
+                  "color": "purple"
+                },
+                {
+                  "value": "6x5V",
+                  "label": "ml (millilitre)",
+                  "color": "orange"
+                },
+                {
+                  "value": "qzik",
+                  "label": "L (litre)",
+                  "color": "blue"
+                },
+                {
+                  "value": "jVox",
+                  "label": "kg",
+                  "color": "gray"
+                },
+                {
+                  "value": "fanS",
+                  "label": "Pièce",
+                  "color": "red"
+                },
+                {
+                  "value": "hK1s",
+                  "label": "Rouleau",
+                  "color": "yellow"
+                },
+                {
+                  "value": "9sWQ",
+                  "label": "Boîte",
+                  "color": "green"
+                },
+                {
+                  "value": "2BLM",
+                  "label": "Mètre linéaire",
+                  "color": "pink"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "fm73PRLpqRL",
+          "sdkName": "quantiteEnStock",
+          "definition": {
+            "name": "Quantité en Stock",
+            "type": "number",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 2
+            }
+          }
+        },
+        {
+          "id": "f2WVGWeq5mk",
+          "sdkName": "seuilDAlerte",
+          "definition": {
+            "name": "Seuil d'Alerte",
+            "type": "number",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 2
+            }
+          }
+        },
+        {
+          "id": "fd5cPdbqbQJ",
+          "sdkName": "prixUnitaire",
+          "definition": {
+            "name": "Prix Unitaire",
+            "type": "currency",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 0,
+              "currencySymbol": "GNF"
+            }
+          }
+        },
+        {
+          "id": "foWitXfNeis",
+          "sdkName": "fournisseur",
+          "definition": {
+            "name": "Fournisseur",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fkbekuPdhT1",
+          "sdkName": "dernierApprovisionnement",
+          "definition": {
+            "name": "Dernier Approvisionnement",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "fsKYNHzqZk2",
+          "sdkName": "statutStock",
+          "definition": {
+            "name": "Statut Stock",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "fqaG",
+                  "label": "En stock",
+                  "color": "green"
+                },
+                {
+                  "value": "6w9H",
+                  "label": "Stock faible",
+                  "color": "yellow"
+                },
+                {
+                  "value": "oeqD",
+                  "label": "Rupture de stock",
+                  "color": "red"
+                },
+                {
+                  "value": "iRnL",
+                  "label": "Commandé",
+                  "color": "blue"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "fptXmMXJwgX",
+          "sdkName": "notes",
+          "definition": {
+            "name": "Notes",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f9ESSjgb6QR",
+          "sdkName": "sortiesDeStock",
+          "definition": {
+            "name": "Sorties de Stock",
+            "type": "linked_record",
+            "template": {
+              "tableId": "tuvh3aLPB55",
+              "isInverse": true,
+              "allowMultiple": false,
+              "inverseFieldId": "futjzANGRvN"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tuvh3aLPB55",
+      "sdkName": "sortiesDeStock",
+      "name": "Sorties de Stock",
+      "primaryFieldId": "f7bUdFY8bH6",
+      "fields": [
+        {
+          "id": "f7bUdFY8bH6",
+          "sdkName": "referenceSortie",
+          "definition": {
+            "name": "Référence Sortie",
+            "type": "autonumber",
+            "template": {}
+          }
+        },
+        {
+          "id": "futjzANGRvN",
+          "sdkName": "article",
+          "definition": {
+            "name": "Article",
+            "type": "linked_record",
+            "template": {
+              "tableId": "t6kzB3ax6wZ",
+              "isInverse": false,
+              "allowMultiple": false,
+              "inverseFieldId": "f9ESSjgb6QR"
+            }
+          }
+        },
+        {
+          "id": "fdJQvnMGfk3",
+          "sdkName": "quantiteSortie",
+          "definition": {
+            "name": "Quantité Sortie",
+            "type": "number",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 2
+            }
+          }
+        },
+        {
+          "id": "fejN975C7zS",
+          "sdkName": "motif",
+          "definition": {
+            "name": "Motif",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "u8St",
+                  "label": "Utilisation travaux",
+                  "color": "blue"
+                },
+                {
+                  "value": "9ENa",
+                  "label": "Perte / Détérioration",
+                  "color": "red"
+                },
+                {
+                  "value": "eGNr",
+                  "label": "Retour fournisseur",
+                  "color": "orange"
+                },
+                {
+                  "value": "4182",
+                  "label": "Inventaire / Ajustement",
+                  "color": "purple"
+                },
+                {
+                  "value": "9bQe",
+                  "label": "Autre",
+                  "color": "gray"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "f18xfqwXLfQ",
+          "sdkName": "dateSortie",
+          "definition": {
+            "name": "Date Sortie",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "fhGGFtRMvsc",
+          "sdkName": "responsable",
+          "definition": {
+            "name": "Responsable",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fkRk7Abkvq5",
+          "sdkName": "notes",
+          "definition": {
+            "name": "Notes",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fqGwLyDbgjH",
+          "sdkName": "dateEnregistrement",
+          "definition": {
+            "name": "Date Enregistrement",
+            "type": "created_at",
+            "template": {
+              "timezone": "",
+              "dateFormat": "local",
+              "timeFormat": "12h",
+              "displayTimeZone": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tgSDdjGX9si",
+      "sdkName": "conversationsAgent",
+      "name": "Conversations Agent",
+      "primaryFieldId": "ffcpbgUAbKk",
+      "fields": [
+        {
+          "id": "ffcpbgUAbKk",
+          "sdkName": "titreSession",
+          "definition": {
+            "name": "Titre Session",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fg34KvHhMbr",
+          "sdkName": "emailUtilisateur",
+          "definition": {
+            "name": "Email Utilisateur",
+            "type": "email",
+            "template": {}
+          }
+        },
+        {
+          "id": "f9tBigjEqkM",
+          "sdkName": "messagesJson",
+          "definition": {
+            "name": "Messages JSON",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fhYc9QrGqQY",
+          "sdkName": "nombreDeMessages",
+          "definition": {
+            "name": "Nombre de Messages",
+            "type": "number",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 0
+            }
+          }
+        },
+        {
+          "id": "f1pjdt37mzq",
+          "sdkName": "dernierMessageUtilisateur",
+          "definition": {
+            "name": "Dernier Message Utilisateur",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f4j3rVkcSXw",
+          "sdkName": "dateCreation",
+          "definition": {
+            "name": "Date Création",
+            "type": "created_at",
+            "template": {
+              "timezone": "",
+              "dateFormat": "local",
+              "timeFormat": "12h",
+              "displayTimeZone": false
+            }
+          }
+        },
+        {
+          "id": "foAbmniHFK7",
+          "sdkName": "derniereMiseAJour",
+          "definition": {
+            "name": "Dernière Mise à Jour",
+            "type": "updated_at",
+            "template": {
+              "timezone": "",
+              "dateFormat": "local",
+              "timeFormat": "12h",
+              "displayTimeZone": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tg8tQG5fWVk",
+      "sdkName": "collaborateurs",
+      "name": "Collaborateurs",
+      "primaryFieldId": "fsbMDw1Lj66",
+      "fields": [
+        {
+          "id": "fsbMDw1Lj66",
+          "sdkName": "nomComplet",
+          "definition": {
+            "name": "Nom Complet",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fpS3LL1ct5v",
+          "sdkName": "email",
+          "definition": {
+            "name": "Email",
+            "type": "email",
+            "template": {}
+          }
+        },
+        {
+          "id": "fq5fQ26a1bq",
+          "sdkName": "poste",
+          "definition": {
+            "name": "Poste",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fpPLQmn5Lfk",
+          "sdkName": "notificationsActives",
+          "definition": {
+            "name": "Notifications Actives",
+            "type": "checkbox",
+            "template": {
+              "defaultValue": true
+            }
+          }
+        },
+        {
+          "id": "frEzq5TSWfd",
+          "sdkName": "dateAjout",
+          "definition": {
+            "name": "Date Ajout",
+            "type": "created_at",
+            "template": {
+              "timezone": "",
+              "dateFormat": "local",
+              "timeFormat": "12h",
+              "displayTimeZone": false
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

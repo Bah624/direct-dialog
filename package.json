@@ -1,0 +1,23 @@
+{
+  "name": "adcampaign-manager",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "automations/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:web": "yarn workspace @project/adcampaign-manager exec vite build",
+    "build:server": "node server/build.mjs",
+    "build": "yarn build:web && yarn build:server",
+    "start": "node server/dist/server.mjs",
+    "dev": "sh scripts/dev.sh",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f app",
+    "typecheck:zite": "zitejs check"
+  },
+  "dependencies": {
+    "zitejs": "0.9.136"
+  }
+}

@@ -1,0 +1,31 @@
+name: direct-dialog
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Image publiée sur GitHub Container Registry par le workflow « release ».
+    # En local, `docker compose up -d --build` construit cette même image.
+    image: ${DIRECT_DIALOG_IMAGE:-direct-dialog:local}
+    container_name: direct-dialog
+    ports:
+      - "${DIRECT_DIALOG_PORT:-8080}:8080"
+    environment:
+      PORT: "8080"
+      # Utilisé dans les liens des e-mails de campagne.
+      APP_URL: "${DIRECT_DIALOG_URL:-http://localhost:8080}"
+      # Utilisateur local exposé à l'agent IA (context.user.email).
+      LOCAL_USER_EMAIL: "${DIRECT_DIALOG_USER_EMAIL:-local@direct-dialog.local}"
+      # Facultatif : sans clé, la page « Agent IA Vocal » affiche une erreur,
+      # le reste de l'application fonctionne normalement.
+      ZITE_OPENAI_ACCESS_TOKEN: "${ZITE_OPENAI_ACCESS_TOKEN:-}"
+    volumes:
+      # Données persistantes : base locale, fichiers envoyés, boîte d'envoi.
+      - app-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  app-data:
+    # Nom fixe : les données survivent au renommage du dossier du projet.
+    name: direct-dialog-data

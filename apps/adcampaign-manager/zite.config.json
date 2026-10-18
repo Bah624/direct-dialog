@@ -1,0 +1,9 @@
+{
+  "accessMode": "internal",
+  "id": "ip2kuase4w",
+  "integrationSettings": {
+    "email": {
+      "fromName": "DIRECT DIALOG"
+    }
+  }
+}

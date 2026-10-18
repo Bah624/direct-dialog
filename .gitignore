@@ -1,0 +1,23 @@
+node_modules
+dist
+.env.local
+.tsbuildinfo
+__zite__*
+.npmrc
+
+# Données locales (base, fichiers envoyés, boîte d'envoi)
+server/data/db.json
+server/data/uploads/
+
+
+# Cle OpenAI eventuelle (le .env de l'application reste versionne)
+/.env
+
+# Données créées en lançant le serveur depuis le dépôt
+/data/
+
+# Outils locaux (CLI gh téléchargée pour cette session)
+.tools/
+
+# macOS
+.DS_Store
