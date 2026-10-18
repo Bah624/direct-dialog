@@ -43,8 +43,8 @@ docker run -d --name direct-dialog -p 8080:8080 \
   ghcr.io/Bah624/direct-dialog:latest
 ```
 
-> L'image doit être publique dans les paramètres du dépôt (Packages → Package settings →
-> Change visibility). Sinon, `docker login ghcr.io` est nécessaire sur la machine cliente.
+> Le paquet `direct-dialog` est public : l'installation par image ne demande aucun
+> identifiant. Vérifiable avec `docker pull ghcr.io/Bah624/direct-dialog:latest`.
 
 ---
 
