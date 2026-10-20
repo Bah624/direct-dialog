@@ -33,12 +33,12 @@ const dateFr = (valeur?: string) => {
   return jour && mois && annee ? `${jour}/${mois}/${annee}` : valeur;
 };
 
-function periodePanneau(e: { disponibleDu?: string; disponibleAu?: string }) {
-  const du = dateFr(e.disponibleDu);
-  const au = dateFr(e.disponibleAu);
-  if (!du && !au) return { texte: 'Non renseignée', ton: 'text-muted-foreground', jours: null as number | null };
+function periodeDates(duIso?: string, auIso?: string, vide = 'Non renseignée') {
+  const du = dateFr(duIso);
+  const au = dateFr(auIso);
+  if (!du && !au) return { texte: vide, ton: 'text-muted-foreground', jours: null as number | null };
   if (du && au) {
-    const fin = new Date(`${e.disponibleAu}T00:00:00`);
+    const fin = new Date(`${auIso}T00:00:00`);
     const aujourd = new Date();
     aujourd.setHours(0, 0, 0, 0);
     const jours = Math.round((fin.getTime() - aujourd.getTime()) / 86_400_000);
@@ -49,6 +49,12 @@ function periodePanneau(e: { disponibleDu?: string; disponibleAu?: string }) {
   }
   return { texte: du ? `À partir du ${du}` : `Jusqu'au ${au}`, ton: 'text-muted-foreground', jours: null };
 }
+
+const periodePanneau = (e: { disponibleDu?: string; disponibleAu?: string }) =>
+  periodeDates(e.disponibleDu, e.disponibleAu);
+
+const locationPanneau = (e: { locationDu?: string; locationAu?: string }) =>
+  periodeDates(e.locationDu, e.locationAu, 'Aucune location en cours');
 
 const coordonnees = (e: { latitude?: number; longitude?: number }) =>
   e.latitude != null && e.longitude != null
@@ -109,6 +115,8 @@ export default function PanneauxPage() {
         quartier: form.quartier || undefined,
         disponibleDu: form.disponibleDu || undefined,
         disponibleAu: form.disponibleAu || undefined,
+        locationDu: form.locationDu || undefined,
+        locationAu: form.locationAu || undefined,
       } as any);
       toast.success(form.id ? 'Panneau mis à jour' : 'Panneau créé');
       setDialogOpen(false);
@@ -260,6 +268,15 @@ export default function PanneauxPage() {
 
                   <div className="rounded-md bg-muted/60 px-2.5 py-2">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Location
+                    </p>
+                    <p className={cn('text-xs font-medium', locationPanneau(panneauSelectionne).ton)}>
+                      {locationPanneau(panneauSelectionne).texte}
+                    </p>
+                  </div>
+
+                  <div className="rounded-md bg-muted/60 px-2.5 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                       Période de disponibilité
                     </p>
                     <p className={cn('text-xs font-medium', periodePanneau(panneauSelectionne).ton)}>
@@ -328,7 +345,7 @@ export default function PanneauxPage() {
                         'Format',
                         'Prix/semaine',
                         'Coordonnées GPS',
-                        'Période',
+                        'Location',
                         'Disponibilité',
                         '',
                       ].map((h) => (
@@ -354,8 +371,8 @@ export default function PanneauxPage() {
                         <td className="px-4 py-3 text-muted-foreground tabular-nums text-xs">
                           {coordonnees(e)}
                         </td>
-                        <td className={cn('px-4 py-3 text-xs', periodePanneau(e).ton)}>
-                          {periodePanneau(e).texte}
+                        <td className={cn('px-4 py-3 text-xs', locationPanneau(e).ton)}>
+                          {locationPanneau(e).texte}
                         </td>
                         <td className="px-4 py-3">
                           <StatusBadge status={e.disponibilite} />
@@ -449,6 +466,22 @@ export default function PanneauxPage() {
                 type="date"
                 value={form.disponibleAu ?? ''}
                 onChange={(e) => set('disponibleAu', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Début de location</Label>
+              <Input
+                type="date"
+                value={form.locationDu ?? ''}
+                onChange={(e) => set('locationDu', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Fin de location</Label>
+              <Input
+                type="date"
+                value={form.locationAu ?? ''}
+                onChange={(e) => set('locationAu', e.target.value)}
               />
             </div>
             <div>

@@ -22,6 +22,9 @@ export type AlertePanneau = {
   localisation: string;
   du: string;
   au: string;
+  locationDu: string;
+  locationAu: string;
+  typePeriode: 'location' | 'disponibilite';
   joursRestants: number;
   etat: 'termine' | 'se_termine' | 'a_venir' | 'disponible';
 };
@@ -43,8 +46,15 @@ export function analyserPanneaux(rows: Ligne[], alerteJours = 7, aujourdHui = ne
   const alertes: AlertePanneau[] = [];
 
   for (const row of rows) {
-    const du = jourDe(row.disponibleDu);
-    const au = jourDe(row.disponibleAu);
+    // La location prime : c'est elle qui porte l'échéance contractuelle.
+    const locationDu = jourDe(row.locationDu);
+    const locationAu = jourDe(row.locationAu);
+    const dispoDu = jourDe(row.disponibleDu);
+    const dispoAu = jourDe(row.disponibleAu);
+
+    const enLocation = Boolean(locationDu || locationAu);
+    const du = enLocation ? locationDu : dispoDu;
+    const au = enLocation ? locationAu : dispoAu;
     if (!du && !au) continue;
 
     const fin = au ?? du!;
@@ -62,8 +72,11 @@ export function analyserPanneaux(rows: Ligne[], alerteJours = 7, aujourdHui = ne
       quartier: row.quartier ?? '',
       ville: row.ville ?? '',
       localisation: row.localisation ?? '',
-      du: row.disponibleDu ?? '',
-      au: row.disponibleAu ?? '',
+      du: enLocation ? (row.locationDu ?? '') : (row.disponibleDu ?? ''),
+      au: enLocation ? (row.locationAu ?? '') : (row.disponibleAu ?? ''),
+      locationDu: row.locationDu ?? '',
+      locationAu: row.locationAu ?? '',
+      typePeriode: enLocation ? 'location' : 'disponibilite',
       joursRestants,
       etat,
     });
@@ -85,17 +98,18 @@ export function messageAlertePanneaux(alertes: AlertePanneau[], alerteJours: num
   const lignes = alertes.map((a) => {
     const periode = `${fmtDate(a.du)} → ${fmtDate(a.au)}`;
     const lieu = [a.quartier, a.ville].filter(Boolean).join(', ');
+    const intitule = a.typePeriode === 'location' ? 'Location' : 'Disponibilité';
     let echeance: string;
     if (a.joursRestants < 0) echeance = `terminée depuis ${Math.abs(a.joursRestants)} jour(s)`;
     else if (a.joursRestants === 0) echeance = "se termine aujourd'hui";
     else echeance = `se termine dans ${a.joursRestants} jour(s)`;
-    return `• ${a.reference} — ${lieu}${a.localisation ? ` (${a.localisation})` : ''}\n  ${periode} · ${echeance}`;
+    return `• ${a.reference} — ${lieu}${a.localisation ? ` (${a.localisation})` : ''}\n  ${intitule} : ${periode} · ${echeance}`;
   });
 
   const texte = [
     entete,
     '',
-    `${alertes.length} panneau(x) à surveiller (seuil ${alerteJours} jour(s)) :`,
+    `${alertes.length} échéance(s) à surveiller (seuil ${alerteJours} jour(s)) :`,
     '',
     ...lignes,
     '',

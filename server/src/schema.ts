@@ -62,6 +62,8 @@ export const TABLES: Record<string, TableSchema> = {
       quartier: "single_line_text", // Quartier
       disponibleDu: "date", // Disponible du
       disponibleAu: "date", // Disponible au
+      locationDu: "date", // Début de location
+      locationAu: "date", // Fin de location
       photo: "attachments", // Photo
       reservations: "linked_record", // Réservations
     },

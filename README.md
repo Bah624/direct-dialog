@@ -155,12 +155,16 @@ Cliquer un panneau **sur la carte 3D ou dans la liste** ouvre sa fiche complète
 
 - **quartier**, ville, localisation précise ;
 - type, format, prix par semaine, coordonnées GPS ;
+- **location** : dates de début et de fin, avec le nombre de jours restants ;
 - **période de disponibilité** (du → au) avec le nombre de jours restants, en vert, ambre
   ou rouge selon l'échéance ;
 - bouton **Itinéraire** (Google Maps).
 
-Les dates se renseignent dans le formulaire du panneau (*Disponible du / Disponible au*),
-avec le quartier.
+Les dates se renseignent dans le formulaire du panneau : **Début de location**,
+**Fin de location**, **Disponible du**, **Disponible au**, avec le quartier.
+
+La **location** est l'échéance prioritaire : c'est elle qui déclenche les alertes. À défaut,
+la période de disponibilité est utilisée.
 
 ### Notifications e-mail, Telegram et WhatsApp
 
@@ -174,10 +178,11 @@ avec le quartier.
 | **Telegram** | jeton du bot, chat ID |
 | **WhatsApp** | jeton Meta Cloud API, identifiant du numéro, destinataire |
 
-Chaque jour à **l'heure choisie**, le serveur envoie un récapitulatif des panneaux dont la
-période se termine dans les **N jours** (seuil réglable) ou vient de se terminer. Le message
-précise pour chaque panneau : référence, quartier, ville, localisation, **du → au**, et
-l'échéance (« se termine dans 3 jours », « terminée depuis 2 jours »).
+Chaque jour à **l'heure choisie**, le serveur envoie un récapitulatif des locations (ou, à
+défaut, des disponibilités) qui se terminent dans les **N jours** (seuil réglable) ou
+viennent de se terminer. Le message précise pour chaque panneau : référence, quartier,
+ville, localisation, **Location : du → au**, et l'échéance (« se termine dans 3 jours »,
+« terminée depuis 2 jours »).
 
 - Boutons **Tester** par canal et **Envoyer le récapitulatif maintenant**.
 - **Historique** des 30 derniers envois et date du dernier envoi.

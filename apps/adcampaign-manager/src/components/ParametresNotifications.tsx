@@ -349,6 +349,7 @@ export default function ParametresNotifications() {
                       </span>
                     </p>
                     <p className="text-xs text-muted-foreground">
+                      {alerte.typePeriode === 'location' ? 'Location' : 'Disponibilité'} :{' '}
                       {dateFr(alerte.du)} → {dateFr(alerte.au)} ·{' '}
                       {alerte.joursRestants < 0
                         ? `terminée depuis ${Math.abs(alerte.joursRestants)} j`

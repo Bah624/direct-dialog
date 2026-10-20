@@ -147,6 +147,10 @@ export type EmplacementsRecordType = {
   disponibleDu?: string;
   /** Fin de la période de disponibilité (YYYY-MM-DD) */
   disponibleAu?: string;
+  /** Début de la location (YYYY-MM-DD) */
+  locationDu?: string;
+  /** Fin de la location (YYYY-MM-DD) */
+  locationAu?: string;
   photo?: ZiteAttachment[];
   /** Links to reservations ("Réservations"). Single record only. "Réservations" */
   reservations?: string | string[];
@@ -166,6 +170,8 @@ export type EmplacementsRecordInput = {
   quartier: string | null;
   disponibleDu: string | null;
   disponibleAu: string | null;
+  locationDu: string | null;
+  locationAu: string | null;
   photo: ZiteAttachmentInput[] | ZiteAttachmentInput | null;
   reservations: string | string[] | null;
 };

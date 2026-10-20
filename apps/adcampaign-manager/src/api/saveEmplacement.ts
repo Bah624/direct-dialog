@@ -18,6 +18,8 @@ export default createEndpoint({
     quartier: z.string().optional(),
     disponibleDu: z.string().optional(),
     disponibleAu: z.string().optional(),
+    locationDu: z.string().optional(),
+    locationAu: z.string().optional(),
   }),
   outputSchema: z.object({ id: z.string(), success: z.boolean() }),
   execute: async ({ input }) => {

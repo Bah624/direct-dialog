@@ -70,8 +70,8 @@ const STYLE: StyleSpecification = {
       minzoom: 13,
       paint: {
         'fill-extrusion-color': '#ffffff',
-        'fill-extrusion-height': 28,
-        'fill-extrusion-opacity': 0.9,
+        'fill-extrusion-height': 18,
+        'fill-extrusion-opacity': 0.62,
       },
     },
   ],

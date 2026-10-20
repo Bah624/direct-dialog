@@ -15,6 +15,9 @@ export type AlertePanneau = {
   localisation: string;
   du: string;
   au: string;
+  locationDu: string;
+  locationAu: string;
+  typePeriode: 'location' | 'disponibilite';
   joursRestants: number;
   etat: 'termine' | 'se_termine' | 'a_venir' | 'disponible';
 };

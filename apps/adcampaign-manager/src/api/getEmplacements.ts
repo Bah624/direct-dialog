@@ -20,6 +20,8 @@ export default createEndpoint({
       quartier: z.string().optional(),
       disponibleDu: z.string().optional(),
       disponibleAu: z.string().optional(),
+      locationDu: z.string().optional(),
+      locationAu: z.string().optional(),
     })),
   }),
   execute: async ({ input }) => {
@@ -49,6 +51,8 @@ export default createEndpoint({
         quartier: e.quartier,
         disponibleDu: e.disponibleDu,
         disponibleAu: e.disponibleAu,
+        locationDu: e.locationDu,
+        locationAu: e.locationAu,
       })),
     };
   },
