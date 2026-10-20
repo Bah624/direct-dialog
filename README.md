@@ -187,31 +187,41 @@ En maintenance).
 | HUD | Chiffre d'affaires, campagnes en cours, réservations en attente, travaux planifiés, horloge |
 | Robustesse | Three.js chargé à la demande ; repli sur un message clair si WebGL est indisponible |
 
-### Siège 3D (v1.6)
+### Siège 3D (v1.7)
 
 ![Siège 3D](docs/siege-3d.png)
 
-La vue par défaut du cockpit est le **siège de l'entreprise** : huit bureaux disposés autour
-d'un hall central, chacun avec ses postes de travail, ses occupants et son étiquette
-flottante (nom, nombre de responsables, opérations à traiter).
+La vue par défaut du cockpit est le **siège de l'entreprise**, organisé en deux ailes :
+
+**Aile administrative**
 
 | Bureau | Responsables rattachés | Ce qui remonte |
 |---|---|---|
-| Accueil | Assistante de direction | Campagnes à valider |
-| Direction | Directeur général, Administrateur | Validations et retards |
-| Comptabilité | Comptable | Factures en retard |
+| Direction générale | Directeur général, Administrateur | Validations et retards |
+| Secrétariat | Secrétaire, Assistante de direction | Dossiers à suivre |
+| Finances | Responsable des finances, Comptable | Factures en retard |
 | Ressources humaines | RH | Effectif collaborateurs |
-| Commercial | Commercial | Réservations à confirmer |
-| Studio graphique | Graphiste | Travaux en cours |
-| Atelier | Chef d'atelier, Machiniste, Responsable technique | Travaux planifiés / en cours |
-| Opérations | Responsable des opérations | Réservations + alertes stock |
 
-Le code couleur est celui du logiciel : **rouge** = alerte (facture en retard, stock sous
-seuil), **orange** = activité en cours, **jaune** = en attente, **bleu** = calme.
+**Aile atelier**
 
-Cliquer un bureau (dans la scène ou dans la liste) recadre la caméra et ouvre sa fiche :
-nom des responsables avec leur profil et leur statut, détail des opérations, et bouton
-**Ouvrir le module** vers l'écran concerné.
+| Espace | Responsables | Équipement modélisé |
+|---|---|---|
+| Opérations | Responsable des opérations, Assistante de gestion | Réservations + alertes stock |
+| Imprimerie | Chef d'atelier, Machiniste, Responsable technique | **3 imprimantes grand format, 1 table de découpe, 1 CNC** |
+| Soudure | Soudeur | Établis, cadres métalliques, étincelles |
+| Décoration | Décorateur, Graphiste | Tables de pose, rouleaux vinyle, panneaux |
+
+Le code couleur reste celui du logiciel : **rouge** alerte, **orange** activité, **jaune**
+attente, **bleu** calme. Cliquer un espace recadre la caméra et ouvre sa fiche
+(responsables, opérations, accès au module).
+
+**Confort d'affichage**
+
+- Les **panneaux latéraux** (indicateurs et listes) sont masqués par défaut pour laisser
+  toute la place à la 3D ; le bouton de la barre supérieure les affiche, et un clic sur un
+  bureau les rouvre automatiquement.
+- Le bouton **Plein écran** masque la barre latérale et l'en-tête : la maquette occupe tout
+  l'écran, avec un bouton « Quitter le plein écran ».
 
 ### Vue Atelier (v1.5)
 
@@ -342,7 +352,8 @@ ZITE_OPENAI_ACCESS_TOKEN=sk-... docker compose up -d
 | Déconnexion | session invalidée (`401` ensuite) |
 | Cockpit 3D | scène WebGL rendue, panneaux cliquables, cadrage + fiche détaillée |
 | Vue Atelier | maquette 3D, 6 postes cliquables, opérations et alertes stock posées dessus |
-| Siège 3D | 8 bureaux, responsables rattachés par profil, navigation vers les modules |
+| Siège 3D | 8 espaces, responsables rattachés par profil, navigation vers les modules |
+| Panneaux & plein écran | panneaux masquables, mode immersif sans barre latérale |
 | Tableau de bord | 5 KPI, courbe 6 mois avec données, relances cliquables, pipeline et répartition |
 
 ---

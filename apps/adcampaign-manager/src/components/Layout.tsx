@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Megaphone, Users, MapPin, Printer, CalendarCheck, FileText, ChevronRight, Menu, X, Mic, Package, BarChart2, UserPlus, Settings, ShieldAlert, LogOut, Boxes } from 'lucide-react';
-import { useState } from 'react';
+import { LayoutDashboard, Megaphone, Users, MapPin, Printer, CalendarCheck, FileText, ChevronRight, Menu, X, Mic, Package, BarChart2, UserPlus, Settings, ShieldAlert, LogOut, Boxes, Maximize2, Minimize2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { cn } from '@project/components/lib/utils';
 import { useSession } from '@/lib/session';
 import { moduleForPath, initiales } from '@/lib/permissions';
@@ -44,8 +44,14 @@ const navItems: NavItem[] = [
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [immersif, setImmersif] = useState(false);
   const location = useLocation();
   const { data, utilisateur, permis, deconnecter } = useSession();
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('immersif', immersif);
+    return () => document.documentElement.classList.remove('immersif');
+  }, [immersif]);
 
   const visible = (item: NavItem) =>
     (item.modulesVisibles ?? [item.module]).some((m) => permis(m, 'voir'));
@@ -65,7 +71,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {mobileOpen && <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setMobileOpen(false)} />}
 
       {/* Sidebar */}
-      <aside className={cn('fixed md:relative z-30 h-full w-60 bg-slate-900 text-white flex flex-col transition-transform duration-300', mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0')}>
+      <aside className={cn('fixed md:relative z-30 h-full w-60 bg-slate-900 text-white flex flex-col transition-transform duration-300', mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0', immersif && 'hidden')}>
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-700">
           <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
@@ -123,19 +129,38 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="px-5 py-3 border-t border-slate-700 text-xs text-slate-500">
-          v1.6 · Régie Publicitaire
+          v1.7 · Régie Publicitaire
         </div>
       </aside>
 
       {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        {immersif && (
+          <button
+            type="button"
+            onClick={() => setImmersif(false)}
+            className="fixed top-3 left-3 z-50 flex items-center gap-2 rounded-lg border border-white/15 bg-slate-900/80 px-3 py-2 text-xs font-medium text-white backdrop-blur hover:bg-slate-800"
+          >
+            <Minimize2 className="w-4 h-4" />
+            Quitter le plein écran
+          </button>
+        )}
         {/* Top bar */}
-        <header className="h-14 border-b border-border bg-card flex items-center px-4 gap-3 flex-shrink-0">
+        <header className={cn('h-14 border-b border-border bg-card flex items-center px-4 gap-3 flex-shrink-0', immersif && 'hidden')}>
           <button className="md:hidden p-2 rounded-lg hover:bg-muted" onClick={() => setMobileOpen((v) => !v)}>
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           <h1 className="font-semibold text-foreground text-base">{currentPage}</h1>
           <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+            <button
+              type="button"
+              onClick={() => setImmersif(true)}
+              className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1.5 text-xs hover:bg-muted"
+              title="Masquer la barre latérale et l'en-tête"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Plein écran</span>
+            </button>
             <span className="hidden sm:inline">{utilisateur?.profil ?? ''}</span>
             <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold">
               {initiales(utilisateur?.nomComplet)}
@@ -154,7 +179,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className={cn('flex-1 overflow-y-auto', immersif ? 'p-0' : 'p-4 md:p-6')}>
           {accesPage ? (
             children
           ) : (

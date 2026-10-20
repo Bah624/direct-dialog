@@ -32,7 +32,12 @@ export const PROFILS = [
   'Responsable des opérations',
   'Responsable technique',
   'Assistante de direction',
+  'Responsable des finances',
+  'Secrétaire',
+  'Assistante de gestion',
   'Commercial',
+  'Soudeur',
+  'Décorateur',
   'Graphiste',
   'Machiniste',
   "Chef d'atelier",
@@ -97,6 +102,25 @@ export const DEFAULT_PERMISSIONS: Permissions = {
     ['dashboard', 'impressions', 'stock', 'collaborateurs', 'rapports'],
     ['impressions', 'stock'],
   ),
+
+  'Responsable des finances': droits(
+    ['dashboard', 'factures', 'clients', 'campagnes', 'rapports'],
+    ['factures'],
+  ),
+
+  Secrétaire: droits(
+    ['dashboard', 'clients', 'campagnes', 'reservations', 'factures'],
+    ['clients', 'reservations'],
+  ),
+
+  'Assistante de gestion': droits(
+    ['dashboard', 'campagnes', 'clients', 'reservations', 'impressions', 'stock', 'rapports'],
+    ['campagnes', 'reservations'],
+  ),
+
+  Soudeur: droits(['dashboard', 'impressions'], ['impressions']),
+
+  'Décorateur': droits(['dashboard', 'impressions', 'stock', 'campagnes'], ['impressions']),
 };
 
 export function accessFor(

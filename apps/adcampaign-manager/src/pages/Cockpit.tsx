@@ -20,7 +20,7 @@ import { Button } from '@project/components/ui/button';
 import StatusBadge from '@/components/StatusBadge';
 import {
   Building2, CalendarCheck, Crosshair, ExternalLink, Factory, Loader2, MapPin,
-  Megaphone, Network, PackageX, Printer, RotateCw, TrendingUp, AlertTriangle,
+  Megaphone, Network, PackageX, Printer, RotateCw, TrendingUp, AlertTriangle, LayoutPanelLeft,
 } from 'lucide-react';
 import { creerScene, type Panneau, type SceneHandle } from '@/components/cockpit/scene';
 import { creerAtelier, ZONES_ATELIER, type AtelierHandle, type ZoneAtelier } from '@/components/cockpit/atelier';
@@ -41,6 +41,7 @@ type Departement = {
   id: string;
   nom: string;
   profils: string[];
+  type: 'bureau' | 'imprimerie' | 'soudure' | 'decoration';
   module: string;
   operations: number;
   detail: string;
@@ -106,6 +107,7 @@ export default function CockpitPage() {
   const [selection, setSelection] = useState<string | null>(null);
   const [rotation, setRotation] = useState(true);
   const [filtre, setFiltre] = useState<string | null>(null);
+  const [afficherPanneaux, setAfficherPanneaux] = useState(false);
   const [heure, setHeure] = useState(new Date());
 
   // --- Chargement -----------------------------------------------------------
@@ -232,6 +234,15 @@ export default function CockpitPage() {
     const campagnesAValider = nb('Campagne');
     const travauxPlanifies = dashboard?.impressionsPlanifiees ?? 0;
     const travauxEnCours = impressions.filter((i) => i.statut === 'En cours').length;
+    const travauxImpression = impressions.filter((i) =>
+      ZONES_TRAVAUX.impression.includes(i.typeDeTravaux ?? ''),
+    ).length;
+    const travauxSoudure = impressions.filter((i) =>
+      ZONES_TRAVAUX.expedition.includes(i.typeDeTravaux ?? ''),
+    ).length;
+    const travauxDecoration = impressions.filter((i) =>
+      ZONES_TRAVAUX.finition.includes(i.typeDeTravaux ?? ''),
+    ).length;
     const alertesStock = articlesEnAlerte.length;
 
     const responsablesPour = (profils: string[]) =>
@@ -249,6 +260,7 @@ export default function CockpitPage() {
       id,
       nom,
       profils,
+      type: (['imprimerie', 'soudure', 'decoration'].includes(id) ? id : 'bureau') as Departement['type'],
       module,
       operations,
       detail,
@@ -258,49 +270,31 @@ export default function CockpitPage() {
 
     return [
       construire(
-        'accueil',
-        'Accueil',
-        ['Assistante de direction'],
+        'direction',
+        'Direction générale',
+        ['Directeur général', 'Administrateur'],
+        '/',
+        campagnesAValider + facturesRetard,
+        `${campagnesAValider} validation(s) · ${facturesRetard} retard(s)`,
+        campagnesAValider > 0 ? 'attente' : facturesRetard > 0 ? 'alerte' : 'libre',
+      ),
+      construire(
+        'secretariat',
+        'Secrétariat',
+        ['Secrétaire', 'Assistante de direction'],
         '/campagnes',
-        campagnesAValider,
-        `${campagnesAValider} campagne(s) à valider`,
-        campagnesAValider > 0 ? 'attente' : 'libre',
+        echeances.length,
+        `${echeances.length} dossier(s) à suivre`,
+        echeances.length > 0 ? 'attente' : 'libre',
       ),
       construire(
-        'operations',
-        'Opérations',
-        ['Responsable des opérations'],
-        '/reservations',
-        reservationsEnAttente + alertesStock,
-        `${reservationsEnAttente} réservation(s) · ${alertesStock} alerte(s) stock`,
-        reservationsEnAttente > 0 ? 'attente' : alertesStock > 0 ? 'alerte' : 'libre',
-      ),
-      construire(
-        'atelier',
-        'Atelier',
-        ["Chef d'atelier", 'Machiniste', 'Responsable technique'],
-        '/impressions',
-        travauxPlanifies + travauxEnCours,
-        `${travauxPlanifies} planifié(s) · ${travauxEnCours} en cours`,
-        travauxEnCours > 0 ? 'active' : travauxPlanifies > 0 ? 'attente' : 'libre',
-      ),
-      construire(
-        'comptabilite',
-        'Comptabilité',
-        ['Comptable'],
+        'finance',
+        'Finances',
+        ['Responsable des finances', 'Comptable'],
         '/factures',
         facturesRetard,
         `${facturesRetard} facture(s) en retard`,
         facturesRetard > 0 ? 'alerte' : 'libre',
-      ),
-      construire(
-        'studio',
-        'Studio graphique',
-        ['Graphiste'],
-        '/impressions',
-        travauxEnCours,
-        `${travauxEnCours} travaux en cours`,
-        travauxEnCours > 0 ? 'active' : 'libre',
       ),
       construire(
         'rh',
@@ -312,22 +306,40 @@ export default function CockpitPage() {
         'libre',
       ),
       construire(
-        'commercial',
-        'Commercial',
-        ['Commercial'],
-        '/campagnes',
-        reservationsEnAttente,
-        `${reservationsEnAttente} réservation(s) à confirmer`,
-        reservationsEnAttente > 0 ? 'attente' : 'libre',
+        'operations',
+        'Opérations',
+        ['Responsable des opérations', 'Assistante de gestion'],
+        '/reservations',
+        reservationsEnAttente + alertesStock,
+        `${reservationsEnAttente} réservation(s) · ${alertesStock} alerte(s) stock`,
+        reservationsEnAttente > 0 ? 'attente' : alertesStock > 0 ? 'alerte' : 'libre',
       ),
       construire(
-        'direction',
-        'Direction',
-        ['Directeur général', 'Administrateur'],
-        '/',
-        campagnesAValider + facturesRetard,
-        `${campagnesAValider} validation(s) · ${facturesRetard} retard(s)`,
-        campagnesAValider > 0 ? 'attente' : facturesRetard > 0 ? 'alerte' : 'libre',
+        'imprimerie',
+        'Imprimerie',
+        ["Chef d'atelier", 'Machiniste', 'Responsable technique'],
+        '/impressions',
+        travauxImpression + travauxEnCours,
+        `${travauxImpression} impression(s) · ${travauxEnCours} en cours`,
+        travauxEnCours > 0 ? 'active' : travauxImpression > 0 ? 'attente' : 'libre',
+      ),
+      construire(
+        'soudure',
+        'Soudure',
+        ['Soudeur'],
+        '/impressions',
+        travauxSoudure,
+        `${travauxSoudure} travaux de soudure / pose`,
+        travauxSoudure > 0 ? 'active' : 'libre',
+      ),
+      construire(
+        'decoration',
+        'Décoration',
+        ['Décorateur', 'Graphiste'],
+        '/impressions',
+        travauxDecoration,
+        `${travauxDecoration} travaux de décoration`,
+        travauxDecoration > 0 ? 'active' : 'libre',
       ),
     ];
   }, [dashboard, impressions, reservationsEnAttente, articlesEnAlerte, utilisateurs, collaborateurs]);
@@ -340,6 +352,7 @@ export default function CockpitPage() {
         operations: d.operations,
         responsables: d.responsables.length,
         statut: d.statut,
+        type: d.type,
       })),
     [departements],
   );
@@ -356,16 +369,16 @@ export default function CockpitPage() {
       vue === 'siege'
         ? creerSiege(conteneur.current, salles, {
             rotation: true,
-            onSelect: (id) => setSelection(id),
+            onSelect: surSelection,
           })
         : vue === 'reseau'
           ? creerScene(conteneur.current, panneaux, {
               rotation: true,
-              onSelect: (id) => setSelection(id),
+              onSelect: surSelection,
             })
           : creerAtelier(conteneur.current, zones, {
               rotation: true,
-              onSelect: (id) => setSelection(id),
+              onSelect: surSelection,
             });
 
     sceneRef.current = handle;
@@ -389,6 +402,11 @@ export default function CockpitPage() {
     setSelection(null);
     setFiltre(null);
   }, [vue]);
+
+  const surSelection = (id: string | null) => {
+    setSelection(id);
+    if (id) setAfficherPanneaux(true);
+  };
 
   const choisir = (id: string | null) => {
     setSelection(id);
@@ -438,7 +456,7 @@ export default function CockpitPage() {
   const compte = (dispo: string) => emplacements.filter((e) => e.disponibilite === dispo).length;
 
   return (
-    <div className="relative -m-4 md:-m-6 h-[calc(100vh-3.5rem)] overflow-hidden bg-[#050b18] text-white">
+    <div className="cockpit relative -m-4 md:-m-6 h-[calc(100vh-3.5rem)] overflow-hidden bg-[#050b18] text-white">
       <div ref={conteneur} className="absolute inset-0" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_38%,rgba(5,11,24,0.85)_100%)]" />
 
@@ -486,6 +504,15 @@ export default function CockpitPage() {
         <Button
           size="icon"
           variant="ghost"
+          className={cn('text-slate-300 hover:bg-white/10 hover:text-white', afficherPanneaux && 'text-sky-400')}
+          onClick={() => setAfficherPanneaux((v) => !v)}
+          title={afficherPanneaux ? 'Masquer les panneaux' : 'Afficher les panneaux'}
+        >
+          <LayoutPanelLeft className="w-4 h-4" />
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
           className="text-slate-300 hover:bg-white/10 hover:text-white"
           onClick={() => setRotation((v) => !v)}
           title={rotation ? 'Arrêter la rotation' : 'Reprendre la rotation'}
@@ -504,6 +531,7 @@ export default function CockpitPage() {
       </div>
 
       {/* KPI */}
+      {afficherPanneaux && (
       <div className="absolute left-4 md:left-6 top-28 md:top-32 hidden lg:flex flex-col gap-3 w-56">
         {stats.map(({ libelle, valeur, icone: Icone, teinte }) => (
           <div
@@ -519,7 +547,10 @@ export default function CockpitPage() {
         ))}
       </div>
 
+      )}
+
       {/* Panneau latéral */}
+      {afficherPanneaux && (
       <div className="absolute right-4 md:right-6 top-28 md:top-32 w-72 md:w-80 hidden md:flex flex-col gap-3">
         <div className="rounded-xl border border-white/10 bg-slate-900/70 backdrop-blur-md overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
@@ -765,6 +796,8 @@ export default function CockpitPage() {
           </div>
         )}
       </div>
+
+      )}
 
       {/* Légende */}
       <div className="absolute bottom-20 md:bottom-24 left-4 md:left-6 flex items-center gap-4 rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 backdrop-blur text-[11px] text-slate-300">

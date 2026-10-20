@@ -107,3 +107,9 @@
     size: A4 landscape;
   }
 }
+
+/* Mode plein écran du cockpit : la vue 3D occupe tout l'écran. */
+html.immersif .cockpit {
+  height: 100vh !important;
+  margin: 0 !important;
+}
