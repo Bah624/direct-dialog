@@ -187,66 +187,51 @@ En maintenance).
 | HUD | Chiffre d'affaires, campagnes en cours, réservations en attente, travaux planifiés, horloge |
 | Robustesse | Three.js chargé à la demande ; repli sur un message clair si WebGL est indisponible |
 
-### Siège 3D (v1.7)
+### Siège 3D (v1.8)
 
 ![Siège 3D](docs/siege-3d.png)
 
-La vue par défaut du cockpit est le **siège de l'entreprise**, organisé en deux ailes :
+Le cockpit s'ouvre sur le **siège** : quatre bureaux administratifs à gauche et un
+**grand atelier** à droite.
 
-**Aile administrative**
-
-| Bureau | Responsables rattachés | Ce qui remonte |
+| Espace | Responsables rattachés | Ce qui remonte |
 |---|---|---|
 | Direction générale | Directeur général, Administrateur | Validations et retards |
 | Secrétariat | Secrétaire, Assistante de direction | Dossiers à suivre |
 | Finances | Responsable des finances, Comptable | Factures en retard |
 | Ressources humaines | RH | Effectif collaborateurs |
+| **Atelier** | 7 responsables répartis sur 4 pôles | 5 opérations en cours |
 
-**Aile atelier**
+L'**Atelier** est un seul espace cliquable qui contient les quatre pôles :
 
-| Espace | Responsables | Équipement modélisé |
+| Pôle | Responsables | Équipement modélisé |
 |---|---|---|
-| Opérations | Responsable des opérations, Assistante de gestion | Réservations + alertes stock |
-| Imprimerie | Chef d'atelier, Machiniste, Responsable technique | **3 imprimantes grand format, 1 table de découpe, 1 CNC** |
+| Opérations | Responsable des opérations, Assistante de gestion | Postes de travail |
+| Imprimerie | Chef d'atelier, Machiniste, Responsable technique | **3 imprimantes, 1 table de découpe, 1 CNC** |
 | Soudure | Soudeur | Établis, cadres métalliques, étincelles |
 | Décoration | Décorateur, Graphiste | Tables de pose, rouleaux vinyle, panneaux |
 
-Le code couleur reste celui du logiciel : **rouge** alerte, **orange** activité, **jaune**
-attente, **bleu** calme. Cliquer un espace recadre la caméra et ouvre sa fiche
-(responsables, opérations, accès au module).
+Cliquer l'atelier ouvre sa fiche : les quatre pôles, leur nombre d'opérations et de
+responsables, et l'accès direct au module. Cliquer un pôle (dans la scène ou dans la liste)
+ouvre sa fiche détaillée.
 
-**Confort d'affichage**
-
-- Les **panneaux latéraux** (indicateurs et listes) sont masqués par défaut pour laisser
-  toute la place à la 3D ; le bouton de la barre supérieure les affiche, et un clic sur un
-  bureau les rouvre automatiquement.
-- Le bouton **Plein écran** masque la barre latérale et l'en-tête : la maquette occupe tout
-  l'écran, avec un bouton « Quitter le plein écran ».
-
-### Vue Atelier (v1.5)
+### Vue Atelier (v1.8)
 
 ![Atelier 3D](docs/cockpit-atelier.png)
 
-Le sélecteur **Réseau / Atelier** (en bas) ouvre une maquette 3D de l'atelier de production :
+Le sélecteur **Atelier** (en bas) ouvre le même espace atelier, vu de plus près, avec ses
+quatre pôles :
 
-| Poste | Contenu affiché |
+| Pôle | Contenu affiché |
 |---|---|
-| Impression | Les deux imprimantes grand format, le nombre de travaux d'impression |
-| Découpe & finition | Table de coupe, rouleaux de vinyle, travaux de pose/découpe/retouche |
-| Séchage | Rack de séchage, travaux terminés |
-| Stock atelier | Étagères ; passe en **alerte rouge** dès qu'un article est sous son seuil |
-| Expédition / pose | Palettes et panneaux prêts ; soudure, installation, maintenance |
-| Bureau chef d'atelier | Poste de supervision |
+| Opérations | Les postes du responsable des opérations et de l'assistante de gestion, les réservations à confirmer |
+| Imprimerie | Les **trois imprimantes**, la **découpe** et la **CNC**, les travaux d'impression |
+| Soudure | Les établis de soudure et les travaux de soudure / pose |
+| Décoration | Les tables de pose et les travaux de décoration |
 
-Chaque poste porte une **étiquette flottante** (nom + nombre d'opérations) et est **cliquable** :
-la carte de droite liste alors les travaux concernés (référence, type, statut, machiniste),
-avec un accès direct au module Travaux. Les couleurs indiquent l'état : en cours (orange),
-planifié (jaune), alerte (rouge), libre (bleu).
-
-Le cockpit réutilise les données et les droits existants : il n'apparaît qu'aux profils ayant
-accès au tableau de bord ou aux emplacements, et n'ajoute aucune table.
-
----
+Le panneau de droite liste les pôles avec leur charge et ouvre le détail du pôle sélectionné.
+Chaque pôle porte une **étiquette flottante** (nom + nombre d'opérations) et est **cliquable**.
+Les couleurs indiquent l'état : en cours (orange), en attente (jaune), alerte (rouge), calme (bleu).
 
 ## Architecture
 

@@ -358,7 +358,7 @@ function OngletUtilisateurs() {
                           </div>
                           <div>
                             <p className="font-medium">{u.nomComplet ?? '—'}</p>
-                            {u.id === data?.profilActif?.id && (
+                            {u.id === data?.utilisateur?.id && (
                               <p className="text-xs text-primary">profil actif</p>
                             )}
                           </div>
@@ -678,7 +678,7 @@ function OngletSysteme({ onRafraichir }: { onRafraichir: () => Promise<void> }) 
           <CardDescription>Informations techniques de l’installation.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <Ligne libelle="Version" valeur="1.7.1" />
+          <Ligne libelle="Version" valeur="1.8.0" />
           <Ligne libelle="Société" valeur={data?.societe?.nom ?? '—'} />
           <Ligne libelle="Devise" valeur={data?.societe?.devise ?? '—'} />
           <Ligne libelle="TVA par défaut" valeur={`${data?.societe?.tauxTva ?? 0} %`} />

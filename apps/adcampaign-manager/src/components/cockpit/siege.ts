@@ -1,12 +1,18 @@
-// Maquette 3D du siège : aile administrative (direction, finances, RH,
-// secrétariat) et aile atelier (opérations, imprimerie, soudure, décoration).
-// Chaque espace est cliquable et affiche ses responsables et ses opérations.
+// Maquette 3D du siège : quatre bureaux administratifs et un grand atelier
+// (opérations, imprimerie, soudure, décoration). Chaque espace est cliquable.
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import {
+  construireAtelier,
+  creerSalleAtelier,
+  LARGEUR_ATELIER,
+  PROFONDEUR_ATELIER,
+  type PoleInfo,
+} from './poles';
 
 export type StatutSalle = 'active' | 'attente' | 'alerte' | 'libre';
-export type TypeSalle = 'bureau' | 'imprimerie' | 'soudure' | 'decoration';
+export type TypeSalle = 'bureau' | 'atelier';
 
 export type Salle = {
   id: string;
@@ -15,6 +21,7 @@ export type Salle = {
   responsables: number;
   statut: StatutSalle;
   type?: TypeSalle;
+  poles?: PoleInfo[];
 };
 
 export type SiegeHandle = {
@@ -31,30 +38,20 @@ const COULEURS: Record<StatutSalle, number> = {
   libre: 0x38bdf8,
 };
 
-type EmplacementSalle = {
-  id: string;
-  nom: string;
-  type: TypeSalle;
-  x: number;
-  z: number;
-};
+type EmplacementSalle = { id: string; nom: string; x: number; z: number };
 
-// Deux ailes : bureaux à gauche, atelier à droite, hall au centre.
-const EMPLACEMENTS: EmplacementSalle[] = [
-  { id: 'direction', nom: 'Direction générale', type: 'bureau', x: -13, z: -9.5 },
-  { id: 'secretariat', nom: 'Secrétariat', type: 'bureau', x: -2, z: -9.5 },
-  { id: 'finance', nom: 'Finances', type: 'bureau', x: -13, z: 0 },
-  { id: 'rh', nom: 'Ressources humaines', type: 'bureau', x: -13, z: 9.5 },
-  { id: 'operations', nom: 'Opérations', type: 'bureau', x: -2, z: 9.5 },
-  { id: 'imprimerie', nom: 'Imprimerie', type: 'imprimerie', x: 13, z: -9.5 },
-  { id: 'soudure', nom: 'Soudure', type: 'soudure', x: 13, z: 0 },
-  { id: 'decoration', nom: 'Décoration', type: 'decoration', x: 13, z: 9.5 },
+const BUREAUX: EmplacementSalle[] = [
+  { id: 'direction', nom: 'Direction générale', x: -13, z: -9.5 },
+  { id: 'secretariat', nom: 'Secrétariat', x: -2, z: -9.5 },
+  { id: 'finance', nom: 'Finances', x: -13, z: 9.5 },
+  { id: 'rh', nom: 'Ressources humaines', x: -2, z: 9.5 },
 ];
 
-export const SALLES_SIEGE = EMPLACEMENTS.map((e) => e.id);
-
+const ATELIER = { x: 12.5, z: 0 };
 const LARGEUR = 9.6;
 const PROFONDEUR = 7.8;
+
+export const SALLES_SIEGE = [...BUREAUX.map((b) => b.id), 'atelier'];
 
 function textureEtiquette(
   nom: string,
@@ -121,19 +118,18 @@ export function creerSiege(
   scene.fog = new THREE.FogExp2(0x060d1a, 0.006);
 
   const camera = new THREE.PerspectiveCamera(40, largeur() / hauteur(), 0.1, 400);
-  camera.position.set(34, 28, 38);
+  camera.position.set(36, 30, 40);
 
   const controles = new OrbitControls(camera, renderer.domElement);
   controles.enableDamping = true;
   controles.dampingFactor = 0.06;
   controles.enablePan = false;
   controles.minDistance = 22;
-  controles.maxDistance = 100;
+  controles.maxDistance = 110;
   controles.minPolarAngle = 0.4;
   controles.maxPolarAngle = 1.15;
   controles.target.set(0, 1.5, 0);
 
-  // --- Lumières -------------------------------------------------------------
   scene.add(new THREE.HemisphereLight(0xdbeafe, 0x0b1220, 1.2));
 
   const soleil = new THREE.DirectionalLight(0xffffff, 2.2);
@@ -144,30 +140,22 @@ export function creerSiege(
   contraste.position.set(26, 18, -22);
   scene.add(contraste);
 
-  // --- Dalle ----------------------------------------------------------------
   const dalle = new THREE.Mesh(
-    new THREE.BoxGeometry(52, 0.4, 42),
+    new THREE.BoxGeometry(56, 0.4, 44),
     new THREE.MeshStandardMaterial({ color: 0x0c1728, roughness: 0.95 }),
   );
   dalle.position.y = -0.2;
   scene.add(dalle);
 
-  const trame = new THREE.GridHelper(52, 52, 0x1e3a5f, 0x14253d);
+  const trame = new THREE.GridHelper(56, 56, 0x1e3a5f, 0x14253d);
   (trame.material as THREE.Material).transparent = true;
   (trame.material as THREE.Material).opacity = 0.4;
   trame.position.y = 0.02;
   scene.add(trame);
 
-  // --- Matériaux ------------------------------------------------------------
   const bois = new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 0.9 });
   const metal = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.7, roughness: 0.35 });
   const sombre = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
-  const papier = new THREE.MeshStandardMaterial({
-    color: 0xe2e8f0,
-    roughness: 0.95,
-    emissive: 0x94a3b8,
-    emissiveIntensity: 0.15,
-  });
   const verre = new THREE.MeshStandardMaterial({
     color: 0x93c5fd,
     transparent: true,
@@ -175,19 +163,14 @@ export function creerSiege(
     roughness: 0.2,
     side: THREE.DoubleSide,
   });
-  const areteVerre = new THREE.LineBasicMaterial({
-    color: 0x60a5fa,
-    transparent: true,
-    opacity: 0.4,
-  });
+  const areteVerre = new THREE.LineBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.4 });
 
   const salleParId = new Map(salles.map((s) => [s.id, s]));
   const groupes = new Map<string, THREE.Group>();
   const cliquables: THREE.Object3D[] = [];
   const etiquettes: { sprite: THREE.Sprite; base: number }[] = [];
 
-  const couleurDe = (id: string) =>
-    new THREE.Color(COULEURS[salleParId.get(id)?.statut ?? 'libre']);
+  const couleurDe = (id: string) => new THREE.Color(COULEURS[salleParId.get(id)?.statut ?? 'libre']);
 
   function cliquable(objet: THREE.Object3D, id: string) {
     objet.userData.salleId = id;
@@ -211,7 +194,6 @@ export function creerSiege(
     return groupe;
   }
 
-  // --- Mobilier de bureau ---------------------------------------------------
   function posteBureau(groupe: THREE.Group, x: number, z: number, teinte: THREE.Color, id: string) {
     const table = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.13, 1.25), bois);
     table.position.set(x, 0.92, z);
@@ -257,180 +239,11 @@ export function creerSiege(
     groupe.add(feuillage);
   }
 
-  // --- Machines d'imprimerie ------------------------------------------------
-  function imprimante(groupe: THREE.Group, x: number, z: number, id: string, teinte: THREE.Color) {
-    const socle = new THREE.Mesh(new THREE.BoxGeometry(2, 0.85, 1.3), sombre);
-    socle.position.set(x, 0.42, z);
-    groupe.add(socle);
-    cliquable(socle, id);
-
-    const portique = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.16, 0.28), metal);
-    portique.position.set(x, 1.15, z + 0.45);
-    groupe.add(portique);
-
-    const barre = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.15, 8), metal);
-    barre.rotation.z = Math.PI / 2;
-    barre.position.set(x, 1.15, z + 0.45);
-    groupe.add(barre);
-
-    const rouleau = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.7, 12), papier);
-    rouleau.rotation.z = Math.PI / 2;
-    rouleau.position.set(x, 0.8, z + 0.95);
-    groupe.add(rouleau);
-
-    const voyant = new THREE.Mesh(
-      new THREE.SphereGeometry(0.09, 10, 10),
-      new THREE.MeshBasicMaterial({ color: teinte }),
-    );
-    voyant.position.set(x + 0.8, 0.95, z + 0.7);
-    groupe.add(voyant);
-
-    const lumiere = new THREE.PointLight(teinte, 4, 4, 2);
-    lumiere.position.set(x, 1.2, z + 0.6);
-    groupe.add(lumiere);
-  }
-
-  function tableDecoupe(groupe: THREE.Group, x: number, z: number, id: string) {
-    const plateau = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.12, 1.3), bois);
-    plateau.position.set(x, 0.9, z);
-    groupe.add(plateau);
-    cliquable(plateau, id);
-
-    for (const [dx, dz] of [[-1, -0.5], [1, -0.5], [-1, 0.5], [1, 0.5]]) {
-      const pied = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.9, 0.07), metal);
-      pied.position.set(x + dx, 0.45, z + dz);
-      groupe.add(pied);
-    }
-
-    const bras = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.06, 0.14), metal);
-    bras.position.set(x, 1.02, z - 0.4);
-    groupe.add(bras);
-
-    const lame = new THREE.Mesh(
-      new THREE.ConeGeometry(0.08, 0.22, 6),
-      new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.9, roughness: 0.2 }),
-    );
-    lame.position.set(x + 0.9, 1.1, z - 0.4);
-    groupe.add(lame);
-  }
-
-  function machineCNC(groupe: THREE.Group, x: number, z: number, id: string) {
-    const bati = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.2, 1.6), sombre);
-    bati.position.set(x, 0.1, z);
-    groupe.add(bati);
-    cliquable(bati, id);
-
-    for (const dx of [-1.1, 1.1]) {
-      const montant = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.9, 0.16), metal);
-      montant.position.set(x + dx, 1.05, z);
-      groupe.add(montant);
-      cliquable(montant, id);
-    }
-    const traverse = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.16, 0.16), metal);
-    traverse.position.set(x, 2, z);
-    groupe.add(traverse);
-
-    const broche = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 10), metal);
-    broche.position.set(x, 1.65, z);
-    groupe.add(broche);
-
-    const plateau = new THREE.Mesh(new THREE.BoxGeometry(2, 0.12, 1.2), papier);
-    plateau.position.set(x, 0.75, z);
-    groupe.add(plateau);
-    cliquable(plateau, id);
-
-    const voyant = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 10, 10),
-      new THREE.MeshBasicMaterial({ color: 0x22c55e }),
-    );
-    voyant.position.set(x + 1.1, 1.5, z + 0.3);
-    groupe.add(voyant);
-  }
-
-  // --- Postes d'atelier -----------------------------------------------------
-  function posteSoudure(groupe: THREE.Group, x: number, z: number, id: string, teinte: THREE.Color) {
-    const etabli = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.14, 1.5), metal);
-    etabli.position.set(x, 0.9, z);
-    groupe.add(etabli);
-    cliquable(etabli, id);
-
-    for (const [dx, dz] of [[-1.25, -0.6], [1.25, -0.6], [-1.25, 0.6], [1.25, 0.6]]) {
-      const pied = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.9, 0.08), metal);
-      pied.position.set(x + dx, 0.45, z + dz);
-      groupe.add(pied);
-    }
-
-    const cadre = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.1, 0.1), metal);
-    cadre.position.set(x + 1.6, 1.4, z);
-    groupe.add(cadre);
-    const montant = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.6, 0.1), metal);
-    montant.position.set(x + 2.35, 0.9, z);
-    groupe.add(montant);
-    cliquable(montant, id);
-
-    const positions = new Float32Array(24 * 3);
-    for (let i = 0; i < 24; i++) {
-      positions[i * 3] = x - 0.6 + (Math.random() - 0.5) * 0.6;
-      positions[i * 3 + 1] = 1.05 + Math.random() * 0.5;
-      positions[i * 3 + 2] = z + (Math.random() - 0.5) * 0.4;
-    }
-    const geometrie = new THREE.BufferGeometry();
-    geometrie.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const etincelles = new THREE.Points(
-      geometrie,
-      new THREE.PointsMaterial({ color: teinte, size: 0.07, transparent: true, opacity: 0.9 }),
-    );
-    groupe.add(etincelles);
-
-    const personne = personnage(teinte);
-    personne.position.set(x - 0.6, 0, z + 1.15);
-    personne.rotation.y = Math.PI;
-    groupe.add(personne);
-  }
-
-  function posteDecoration(groupe: THREE.Group, x: number, z: number, id: string, teinte: THREE.Color) {
-    const table = new THREE.Mesh(new THREE.BoxGeometry(3, 0.13, 1.6), bois);
-    table.position.set(x, 0.9, z);
-    groupe.add(table);
-    cliquable(table, id);
-
-    for (const [dx, dz] of [[-1.3, -0.6], [1.3, -0.6], [-1.3, 0.6], [1.3, 0.6]]) {
-      const pied = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.9, 0.07), metal);
-      pied.position.set(x + dx, 0.45, z + dz);
-      groupe.add(pied);
-    }
-
-    for (const [index, couleur] of [0xf97316, 0x38bdf8, 0x22c55e].entries()) {
-      const rouleau = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.22, 0.22, 1.3, 12),
-        new THREE.MeshStandardMaterial({ color: couleur, roughness: 0.5 }),
-      );
-      rouleau.rotation.x = Math.PI / 2;
-      rouleau.position.set(x - 1.1 + index * 0.6, 0.25, z + 1.1);
-      groupe.add(rouleau);
-    }
-
-    const panneau = new THREE.Mesh(
-      new THREE.BoxGeometry(1.4, 1, 0.07),
-      new THREE.MeshBasicMaterial({ color: teinte }),
-    );
-    panneau.position.set(x + 1.6, 1.5, z);
-    panneau.rotation.z = 0.08;
-    groupe.add(panneau);
-    cliquable(panneau, id);
-
-    const personne = personnage(teinte);
-    personne.position.set(x - 0.2, 0, z + 1.3);
-    personne.rotation.y = Math.PI;
-    groupe.add(personne);
-  }
-
-  // --- Construction des salles ---------------------------------------------
-  for (const emplacement of EMPLACEMENTS) {
+  // --- Bureaux administratifs ----------------------------------------------
+  for (const emplacement of BUREAUX) {
     const salle = salleParId.get(emplacement.id);
     const groupe = new THREE.Group();
     groupe.position.set(emplacement.x, 0, emplacement.z);
-
     const teinte = couleurDe(emplacement.id);
 
     const dalleSalle = new THREE.Mesh(
@@ -472,36 +285,8 @@ export function creerSiege(
     cliquable(murNord, emplacement.id);
     cliquable(murOuest, emplacement.id);
 
-    switch (emplacement.type) {
-      case 'imprimerie':
-        // Trois imprimantes grand format, une découpe, une CNC.
-        for (const [index, dx] of [-3, 0, 3].entries()) {
-          imprimante(groupe, dx, -1.6, emplacement.id, teinte);
-          if (index === 0) {
-            const lumiere = new THREE.PointLight(teinte, 6, 8, 2);
-            lumiere.position.set(0, 2, -1);
-            groupe.add(lumiere);
-          }
-        }
-        tableDecoupe(groupe, -2.4, 2.1, emplacement.id);
-        machineCNC(groupe, 2.4, 2.1, emplacement.id);
-        break;
-
-      case 'soudure':
-        posteSoudure(groupe, -1.6, 0, emplacement.id, teinte);
-        posteSoudure(groupe, 2.5, 2.4, emplacement.id, teinte);
-        break;
-
-      case 'decoration':
-        posteDecoration(groupe, -1.4, -0.6, emplacement.id, teinte);
-        posteDecoration(groupe, 2.2, 2.4, emplacement.id, teinte);
-        break;
-
-      default:
-        posteBureau(groupe, -2.2, -0.6, teinte, emplacement.id);
-        posteBureau(groupe, 2.2, -0.6, teinte, emplacement.id);
-        break;
-    }
+    posteBureau(groupe, -2.2, -0.6, teinte, emplacement.id);
+    posteBureau(groupe, 2.2, -0.6, teinte, emplacement.id);
 
     const texture = textureEtiquette(
       emplacement.nom,
@@ -525,32 +310,82 @@ export function creerSiege(
     groupes.set(emplacement.id, groupe);
   }
 
+  // --- Atelier : un seul grand espace, quatre pôles -------------------------
+  {
+    const salle = salleParId.get('atelier');
+    const groupe = new THREE.Group();
+    groupe.position.set(ATELIER.x, 0, ATELIER.z);
+    const teinte = couleurDe('atelier');
+
+    const dalleAtelier = creerSalleAtelier(groupe, teinte);
+    cliquable(dalleAtelier, 'atelier');
+
+    const hauteurMur = 3;
+    const murNord = new THREE.Mesh(new THREE.BoxGeometry(LARGEUR_ATELIER, hauteurMur, 0.08), verre);
+    murNord.position.set(0, hauteurMur / 2, -PROFONDEUR_ATELIER / 2);
+    groupe.add(murNord);
+    const areteNord = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(LARGEUR_ATELIER, hauteurMur, 0.08)),
+      areteVerre,
+    );
+    areteNord.position.copy(murNord.position);
+    groupe.add(areteNord);
+    const murOuest = new THREE.Mesh(new THREE.BoxGeometry(0.08, hauteurMur, PROFONDEUR_ATELIER), verre);
+    murOuest.position.set(-LARGEUR_ATELIER / 2, hauteurMur / 2, 0);
+    groupe.add(murOuest);
+    const areteOuest = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(0.08, hauteurMur, PROFONDEUR_ATELIER)),
+      areteVerre,
+    );
+    areteOuest.position.copy(murOuest.position);
+    groupe.add(areteOuest);
+    cliquable(murNord, 'atelier');
+    cliquable(murOuest, 'atelier');
+
+    construireAtelier(groupe, salle?.poles ?? [], { cliquable, etiquettes });
+
+    const texture = textureEtiquette(
+      'Atelier',
+      salle?.operations ?? 0,
+      salle?.responsables ?? 0,
+      salle?.statut ?? 'libre',
+    );
+    const sprite = new THREE.Sprite(
+      new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }),
+    );
+    sprite.scale.set(7, 2.08, 1);
+    sprite.position.set(0, 9.4, 0);
+    groupe.add(sprite);
+    etiquettes.push({ sprite, base: 9.4 });
+
+    const matEtiquette = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 4.2, 6), metal);
+    matEtiquette.position.set(0, 3.4, 0);
+    groupe.add(matEtiquette);
+
+    scene.add(groupe);
+    groupes.set('atelier', groupe);
+  }
+
   // --- Hall central ---------------------------------------------------------
   const hall = new THREE.Group();
+  hall.position.set(-2.5, 0, 0);
   const tapis = new THREE.Mesh(
-    new THREE.CircleGeometry(4.4, 48),
+    new THREE.CircleGeometry(3.4, 48),
     new THREE.MeshStandardMaterial({ color: 0x1e3a5f, roughness: 0.9 }),
   );
   tapis.rotation.x = -Math.PI / 2;
   tapis.position.y = 0.03;
   hall.add(tapis);
   const anneau = new THREE.Mesh(
-    new THREE.RingGeometry(4.3, 4.55, 48),
+    new THREE.RingGeometry(3.3, 3.5, 48),
     new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.5, side: THREE.DoubleSide }),
   );
   anneau.rotation.x = -Math.PI / 2;
   anneau.position.y = 0.05;
   hall.add(anneau);
-  const comptoir = new THREE.Mesh(new THREE.BoxGeometry(4, 1.1, 1), bois);
-  comptoir.position.set(0, 0.55, 0.4);
+  const comptoir = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.1, 0.9), bois);
+  comptoir.position.set(0, 0.55, 0.3);
   hall.add(comptoir);
-  const logo = new THREE.Mesh(
-    new THREE.CircleGeometry(1, 32),
-    new THREE.MeshBasicMaterial({ color: 0xf97316 }),
-  );
-  logo.rotation.x = -Math.PI / 2;
-  logo.position.set(0, 0.06, 0.4);
-  hall.add(logo);
   scene.add(hall);
 
   // --- Interaction ----------------------------------------------------------
@@ -569,7 +404,7 @@ export function creerSiege(
     if (!groupe) return;
     const actif = selection === id || survol === id;
     groupe.position.y = selection === id ? 0.3 : 0;
-    groupe.scale.setScalar(selection === id ? 1.03 : 1);
+    groupe.scale.setScalar(selection === id ? 1.02 : 1);
     groupe.traverse((objet) => {
       const mesh = objet as THREE.Mesh;
       const materiau = mesh.material as THREE.MeshStandardMaterial | undefined;
@@ -630,10 +465,10 @@ export function creerSiege(
     if (depart < 1.8) {
       const t = Math.min(1, depart / 1.8);
       const ease = 1 - Math.pow(1 - t, 3);
-      camera.position.lerpVectors(new THREE.Vector3(48, 42, 52), new THREE.Vector3(34, 28, 38), ease);
+      camera.position.lerpVectors(new THREE.Vector3(50, 44, 54), new THREE.Vector3(36, 30, 40), ease);
     } else if (rotationActive && !survol) {
       const rayon = Math.hypot(camera.position.x, camera.position.z);
-      const angle = Math.atan2(camera.position.z, camera.position.x) + dt * 0.025;
+      const angle = Math.atan2(camera.position.z, camera.position.x) + dt * 0.022;
       camera.position.x = Math.cos(angle) * rayon;
       camera.position.z = Math.sin(angle) * rayon;
     }
@@ -658,7 +493,8 @@ export function creerSiege(
       const position = groupe.position;
       controles.target.set(position.x, 1.8, position.z);
       cible.copy(controles.target);
-      camera.position.set(position.x + 23, 25, position.z + 23);
+      const recul = id === 'atelier' ? 32 : 24;
+      camera.position.set(position.x + recul, recul + 2, position.z + recul);
       rotationActive = false;
     } else {
       controles.target.set(0, 1.5, 0);

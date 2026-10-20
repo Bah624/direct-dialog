@@ -37,16 +37,28 @@ type Collaborateur = GetCollaborateursOutputType['collaborateurs'][0];
 
 type Vue = 'siege' | 'reseau' | 'atelier';
 
-type Departement = {
+type Pole = {
   id: string;
   nom: string;
   profils: string[];
-  type: 'bureau' | 'imprimerie' | 'soudure' | 'decoration';
   module: string;
   operations: number;
   detail: string;
   statut: StatutSalle;
   responsables: Utilisateur[];
+};
+
+type Departement = {
+  id: string;
+  nom: string;
+  profils: string[];
+  type: 'bureau' | 'atelier';
+  module: string;
+  operations: number;
+  detail: string;
+  statut: StatutSalle;
+  responsables: Utilisateur[];
+  poles?: Pole[];
 };
 
 const DISPOS = ['Disponible', 'Réservé', 'Occupé', 'En maintenance'] as const;
@@ -73,9 +85,9 @@ const COULEUR_ZONE: Record<string, string> = {
 };
 
 const ZONES_TRAVAUX: Record<string, string[]> = {
-  impression: ['Impression'],
-  finition: ['Décapoter (retrait vinyle)', 'Pose de vinyle', 'Retouche & finition'],
-  expedition: ['Soudure', 'Installation panneau', 'Maintenance / Réparation', 'Affichage', 'Branding'],
+  imprimerie: ['Impression'],
+  soudure: ['Soudure', 'Installation panneau', 'Maintenance / Réparation'],
+  decoration: ['Décapoter (retrait vinyle)', 'Pose de vinyle', 'Retouche & finition', 'Affichage', 'Branding'],
 };
 
 function webglDisponible(): boolean {
@@ -188,18 +200,18 @@ export default function CockpitPage() {
 
   const operationsParZone = useMemo<Record<string, Impression[]>>(
     () => ({
-      impression: impressions.filter((i) =>
-        ZONES_TRAVAUX.impression.includes(i.typeDeTravaux ?? ''),
+      operations: [],
+      imprimerie: impressions.filter(
+        (i) =>
+          !(ZONES_TRAVAUX.soudure ?? []).includes(i.typeDeTravaux ?? '') &&
+          !(ZONES_TRAVAUX.decoration ?? []).includes(i.typeDeTravaux ?? ''),
       ),
-      finition: impressions.filter((i) =>
-        ZONES_TRAVAUX.finition.includes(i.typeDeTravaux ?? ''),
+      soudure: impressions.filter((i) =>
+        (ZONES_TRAVAUX.soudure ?? []).includes(i.typeDeTravaux ?? ''),
       ),
-      sechage: impressions.filter((i) => i.statut === 'Terminée'),
-      expedition: impressions.filter((i) =>
-        ZONES_TRAVAUX.expedition.includes(i.typeDeTravaux ?? ''),
+      decoration: impressions.filter((i) =>
+        (ZONES_TRAVAUX.decoration ?? []).includes(i.typeDeTravaux ?? ''),
       ),
-      stock: [],
-      bureau: [],
     }),
     [impressions],
   );
@@ -212,18 +224,17 @@ export default function CockpitPage() {
     };
 
     return ZONES_ATELIER.map((z) => {
-      if (z.id === 'stock') {
+      if (z.id === 'operations') {
         return {
           ...z,
-          operations: articlesEnAlerte.length,
-          statut: articlesEnAlerte.length > 0 ? 'alerte' : 'libre',
+          operations: reservationsEnAttente,
+          statut: reservationsEnAttente > 0 ? 'attente' : 'libre',
         };
       }
-      if (z.id === 'bureau') return { ...z, operations: 0, statut: 'libre' };
       const liste = operationsParZone[z.id] ?? [];
       return { ...z, operations: liste.length, statut: statutDe(liste) };
     });
-  }, [operationsParZone, articlesEnAlerte]);
+  }, [operationsParZone, reservationsEnAttente]);
 
   // --- Données siège ---------------------------------------------------------
   const departements = useMemo<Departement[]>(() => {
@@ -234,14 +245,16 @@ export default function CockpitPage() {
     const campagnesAValider = nb('Campagne');
     const travauxPlanifies = dashboard?.impressionsPlanifiees ?? 0;
     const travauxEnCours = impressions.filter((i) => i.statut === 'En cours').length;
-    const travauxImpression = impressions.filter((i) =>
-      ZONES_TRAVAUX.impression.includes(i.typeDeTravaux ?? ''),
+    const travauxImpression = impressions.filter(
+      (i) =>
+        !(ZONES_TRAVAUX.soudure ?? []).includes(i.typeDeTravaux ?? '') &&
+        !(ZONES_TRAVAUX.decoration ?? []).includes(i.typeDeTravaux ?? ''),
     ).length;
     const travauxSoudure = impressions.filter((i) =>
-      ZONES_TRAVAUX.expedition.includes(i.typeDeTravaux ?? ''),
+      (ZONES_TRAVAUX.soudure ?? []).includes(i.typeDeTravaux ?? ''),
     ).length;
     const travauxDecoration = impressions.filter((i) =>
-      ZONES_TRAVAUX.finition.includes(i.typeDeTravaux ?? ''),
+      (ZONES_TRAVAUX.decoration ?? []).includes(i.typeDeTravaux ?? ''),
     ).length;
     const alertesStock = articlesEnAlerte.length;
 
@@ -260,7 +273,7 @@ export default function CockpitPage() {
       id,
       nom,
       profils,
-      type: (['imprimerie', 'soudure', 'decoration'].includes(id) ? id : 'bureau') as Departement['type'],
+      type: 'bureau',
       module,
       operations,
       detail,
@@ -268,7 +281,65 @@ export default function CockpitPage() {
       responsables: responsablesPour(profils),
     });
 
-    return [
+    const pole = (
+      id: string,
+      nom: string,
+      profils: string[],
+      module: string,
+      operations: number,
+      detail: string,
+      statut: StatutSalle,
+    ): Pole => ({
+      id,
+      nom,
+      profils,
+      module,
+      operations,
+      detail,
+      statut,
+      responsables: responsablesPour(profils),
+    });
+
+    const poles: Pole[] = [
+      pole(
+        'operations',
+        'Opérations',
+        ['Responsable des opérations', 'Assistante de gestion'],
+        '/reservations',
+        reservationsEnAttente,
+        `${reservationsEnAttente} réservation(s) à confirmer`,
+        reservationsEnAttente > 0 ? 'attente' : 'libre',
+      ),
+      pole(
+        'imprimerie',
+        'Imprimerie',
+        ["Chef d'atelier", 'Machiniste', 'Responsable technique'],
+        '/impressions',
+        travauxImpression,
+        `${travauxImpression} impression(s) · ${travauxEnCours} en cours`,
+        travauxEnCours > 0 ? 'active' : travauxImpression > 0 ? 'attente' : 'libre',
+      ),
+      pole(
+        'soudure',
+        'Soudure',
+        ['Soudeur'],
+        '/impressions',
+        travauxSoudure,
+        `${travauxSoudure} travaux de soudure / pose`,
+        travauxSoudure > 0 ? 'active' : 'libre',
+      ),
+      pole(
+        'decoration',
+        'Décoration',
+        ['Décorateur', 'Graphiste'],
+        '/impressions',
+        travauxDecoration,
+        `${travauxDecoration} travaux de décoration`,
+        travauxDecoration > 0 ? 'active' : 'libre',
+      ),
+    ];
+
+    const bureaux: Departement[] = [
       construire(
         'direction',
         'Direction générale',
@@ -305,42 +376,34 @@ export default function CockpitPage() {
         `${collaborateurs.length} collaborateur(s)`,
         'libre',
       ),
-      construire(
-        'operations',
-        'Opérations',
-        ['Responsable des opérations', 'Assistante de gestion'],
-        '/reservations',
-        reservationsEnAttente + alertesStock,
-        `${reservationsEnAttente} réservation(s) · ${alertesStock} alerte(s) stock`,
-        reservationsEnAttente > 0 ? 'attente' : alertesStock > 0 ? 'alerte' : 'libre',
-      ),
-      construire(
-        'imprimerie',
-        'Imprimerie',
-        ["Chef d'atelier", 'Machiniste', 'Responsable technique'],
-        '/impressions',
-        travauxImpression + travauxEnCours,
-        `${travauxImpression} impression(s) · ${travauxEnCours} en cours`,
-        travauxEnCours > 0 ? 'active' : travauxImpression > 0 ? 'attente' : 'libre',
-      ),
-      construire(
-        'soudure',
-        'Soudure',
-        ['Soudeur'],
-        '/impressions',
-        travauxSoudure,
-        `${travauxSoudure} travaux de soudure / pose`,
-        travauxSoudure > 0 ? 'active' : 'libre',
-      ),
-      construire(
-        'decoration',
-        'Décoration',
-        ['Décorateur', 'Graphiste'],
-        '/impressions',
-        travauxDecoration,
-        `${travauxDecoration} travaux de décoration`,
-        travauxDecoration > 0 ? 'active' : 'libre',
-      ),
+    ];
+
+    const totalAtelier = poles.reduce((total, p) => total + p.operations, 0);
+    const responsablesAtelier = [
+      ...new Map(poles.flatMap((p) => p.responsables).map((r) => [r.id, r])).values(),
+    ];
+    const statutAtelier: StatutSalle = poles.some((p) => p.statut === 'alerte')
+      ? 'alerte'
+      : poles.some((p) => p.statut === 'active')
+        ? 'active'
+        : poles.some((p) => p.statut === 'attente')
+          ? 'attente'
+          : 'libre';
+
+    return [
+      ...bureaux,
+      {
+        id: 'atelier',
+        nom: 'Atelier',
+        profils: [...new Set(poles.flatMap((p) => p.profils))],
+        type: 'atelier',
+        module: '/impressions',
+        operations: totalAtelier,
+        detail: `${poles.length} pôles · ${totalAtelier} opération(s)`,
+        statut: statutAtelier,
+        responsables: responsablesAtelier,
+        poles,
+      },
     ];
   }, [dashboard, impressions, reservationsEnAttente, articlesEnAlerte, utilisateurs, collaborateurs]);
 
@@ -353,6 +416,13 @@ export default function CockpitPage() {
         responsables: d.responsables.length,
         statut: d.statut,
         type: d.type,
+        poles: d.poles?.map((p) => ({
+          id: p.id as any,
+          nom: p.nom,
+          operations: p.operations,
+          responsables: p.responsables.length,
+          statut: p.statut,
+        })),
       })),
     [departements],
   );
@@ -417,6 +487,8 @@ export default function CockpitPage() {
   const emplacementSelectionne = emplacements.find((e) => e.id === selection) ?? null;
   const zoneSelectionnee = vue === 'atelier' ? zones.find((z) => z.id === selection) ?? null : null;
   const departementSelectionne = vue === 'siege' ? departements.find((d) => d.id === selection) ?? null : null;
+  const tousLesPoles = departements.flatMap((d) => d.poles ?? []);
+  const poleSelectionne = vue === 'siege' ? tousLesPoles.find((p) => p.id === selection) ?? null : null;
   const operationsSelectionnees = selection ? operationsParZone[selection] ?? [] : [];
 
   const stats = [
@@ -448,7 +520,7 @@ export default function CockpitPage() {
 
   const sousTitre =
     vue === 'siege'
-      ? `Siège · ${departements.length} bureaux · ${utilisateurs.length} responsable(s)`
+      ? `Siège · ${departements.length} espaces · ${utilisateurs.length} responsable(s)`
       : vue === 'reseau'
         ? `Réseau d'affichage · ${emplacements.length} emplacement(s)`
         : `Atelier de production · ${impressions.length} opération(s)`;
@@ -556,10 +628,10 @@ export default function CockpitPage() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <p className="text-sm font-medium">
               {vue === 'siege'
-                ? 'Bureaux'
+                ? 'Espaces'
                 : vue === 'reseau'
                   ? 'Emplacements'
-                  : 'Postes de l’atelier'}
+                  : 'Pôles de l’atelier'}
             </p>
             <span className="text-[11px] text-slate-400">
               {vue === 'siege' ? departements.length : vue === 'reseau' ? emplacements.length : zones.length}
@@ -658,45 +730,79 @@ export default function CockpitPage() {
         </div>
 
         {/* Détail siège */}
-        {vue === 'siege' && departementSelectionne && (
+        {(poleSelectionne || departementSelectionne) && (
           <div className="rounded-xl border border-white/10 bg-slate-900/80 backdrop-blur-md p-4 space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm font-semibold">{departementSelectionne.nom}</p>
-                <p className="text-[11px] text-slate-400">{departementSelectionne.detail}</p>
+                <p className="text-sm font-semibold">
+                  {poleSelectionne?.nom ?? departementSelectionne?.nom}
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  {poleSelectionne?.detail ?? departementSelectionne?.detail}
+                </p>
               </div>
-              <span className={cn('mt-1 w-2.5 h-2.5 rounded-full', COULEUR_ZONE[departementSelectionne.statut])} />
+              <span
+                className={cn(
+                  'mt-1 w-2.5 h-2.5 rounded-full',
+                  COULEUR_ZONE[poleSelectionne?.statut ?? departementSelectionne?.statut ?? 'libre'],
+                )}
+              />
             </div>
 
-            <div>
-              <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1.5">Responsables</p>
-              {departementSelectionne.responsables.length > 0 ? (
-                <ul className="space-y-1.5">
-                  {departementSelectionne.responsables.map((r) => (
-                    <li key={r.id} className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-semibold">
-                        {initiales(r.nomComplet ?? '')}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[11px] font-medium truncate">{r.nomComplet}</span>
-                        <span className="block text-[10px] text-slate-400 truncate">{r.profil}</span>
-                      </span>
-                      <span
-                        className={cn(
-                          'w-1.5 h-1.5 rounded-full',
-                          r.statut === 'Inactif' ? 'bg-slate-500' : 'bg-emerald-400',
-                        )}
-                      />
+            {!poleSelectionne && (departementSelectionne?.poles?.length ?? 0) > 0 ? (
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1.5">
+                  Pôles de l’atelier
+                </p>
+                <ul className="space-y-1">
+                  {departementSelectionne!.poles!.map((p) => (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => choisir(p.id)}
+                        className="w-full flex items-center gap-2 rounded-md px-1.5 py-1.5 text-left hover:bg-white/5"
+                      >
+                        <span className={cn('w-1.5 h-1.5 rounded-full', COULEUR_ZONE[p.statut])} />
+                        <span className="min-w-0 flex-1 text-[11px] truncate">{p.nom}</span>
+                        <span className="text-[10px] text-slate-400 tabular-nums">
+                          {p.operations} op. · {p.responsables.length} resp.
+                        </span>
+                      </button>
                     </li>
                   ))}
                 </ul>
-              ) : (
-                <p className="text-[11px] text-slate-400">Aucun responsable enregistré.</p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1.5">Responsables</p>
+                {(poleSelectionne?.responsables ?? departementSelectionne?.responsables ?? []).length > 0 ? (
+                  <ul className="space-y-1.5 max-h-44 overflow-y-auto">
+                    {(poleSelectionne?.responsables ?? departementSelectionne?.responsables ?? []).map((r) => (
+                      <li key={r.id} className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-semibold">
+                          {initiales(r.nomComplet ?? '')}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[11px] font-medium truncate">{r.nomComplet}</span>
+                          <span className="block text-[10px] text-slate-400 truncate">{r.profil}</span>
+                        </span>
+                        <span
+                          className={cn(
+                            'w-1.5 h-1.5 rounded-full',
+                            r.statut === 'Inactif' ? 'bg-slate-500' : 'bg-emerald-400',
+                          )}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-[11px] text-slate-400">Aucun responsable enregistré.</p>
+                )}
+              </div>
+            )}
 
             <Button asChild size="sm" className="w-full gap-2">
-              <Link to={departementSelectionne.module}>
+              <Link to={poleSelectionne?.module ?? departementSelectionne?.module ?? '/'}>
                 Ouvrir le module <ExternalLink className="w-3.5 h-3.5" />
               </Link>
             </Button>
@@ -752,21 +858,10 @@ export default function CockpitPage() {
               <span className={cn('mt-1 w-2.5 h-2.5 rounded-full', COULEUR_ZONE[zoneSelectionnee.statut])} />
             </div>
 
-            {zoneSelectionnee.id === 'stock' ? (
-              articlesEnAlerte.length > 0 ? (
-                <ul className="space-y-1.5 max-h-40 overflow-y-auto">
-                  {articlesEnAlerte.slice(0, 6).map((a) => (
-                    <li key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
-                      <span className="truncate text-slate-300">{a.nomArticle ?? a.referenceArticle}</span>
-                      <span className="text-red-400 tabular-nums whitespace-nowrap">
-                        {a.quantiteEnStock ?? 0} / {a.seuilDAlerte ?? 0}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-[11px] text-slate-400">Aucune alerte de stock.</p>
-              )
+            {zoneSelectionnee.id === 'operations' ? (
+              <p className="text-[11px] text-slate-400">
+                {zoneSelectionnee.operations} réservation(s) à confirmer côté opérations.
+              </p>
             ) : operationsSelectionnees.length > 0 ? (
               <ul className="space-y-2 max-h-44 overflow-y-auto">
                 {operationsSelectionnees.slice(0, 6).map((operation) => (
@@ -785,7 +880,7 @@ export default function CockpitPage() {
                 ))}
               </ul>
             ) : (
-              <p className="text-[11px] text-slate-400">Aucune opération sur ce poste.</p>
+              <p className="text-[11px] text-slate-400">Aucune opération sur ce pôle.</p>
             )}
 
             <Button asChild size="sm" variant="secondary" className="w-full gap-2">

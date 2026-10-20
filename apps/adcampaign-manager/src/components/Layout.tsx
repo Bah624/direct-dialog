@@ -129,7 +129,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="px-5 py-3 border-t border-slate-700 text-xs text-slate-500">
-          v1.7.1 · Régie Publicitaire
+          v1.8 · Régie Publicitaire
         </div>
       </aside>
 
