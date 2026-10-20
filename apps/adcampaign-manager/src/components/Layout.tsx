@@ -1,9 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Megaphone, Users, MapPin, Printer, CalendarCheck, FileText, ChevronRight, Menu, X, Mic, Package, BarChart2, UserPlus, Settings, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Megaphone, Users, MapPin, Printer, CalendarCheck, FileText, ChevronRight, Menu, X, Mic, Package, BarChart2, UserPlus, Settings, ShieldAlert, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@project/components/lib/utils';
-import { toast } from 'sonner';
-import { Toaster } from '@project/components/ui/sonner';
 import { useSession } from '@/lib/session';
 import { moduleForPath, initiales } from '@/lib/permissions';
 
@@ -40,7 +38,7 @@ const navItems: NavItem[] = [
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const { data, profilActif, permis, changerProfil } = useSession();
+  const { data, utilisateur, permis, deconnecter } = useSession();
 
   const visible = (item: NavItem) =>
     (item.modulesVisibles ?? [item.module]).some((m) => permis(m, 'voir'));
@@ -53,17 +51,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     !moduleCourant ||
     permis(moduleCourant, 'voir') ||
     (moduleCourant === 'parametres' && permis('utilisateurs', 'voir'));
-
-  const utilisateursActifs = (data?.utilisateurs ?? []).filter((u) => u.statut !== 'Inactif');
-
-  const changer = async (id: string) => {
-    try {
-      await changerProfil(id);
-      toast.success('Profil changé');
-    } catch (erreur: any) {
-      toast.error(erreur?.message ?? 'Changement de profil impossible');
-    }
-  };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -107,36 +94,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        {/* Profil actif */}
+        {/* Compte connecté */}
         <div className="px-3 py-3 border-t border-slate-700 space-y-2">
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 px-1">Profil actif</p>
           <div className="flex items-center gap-2 px-1">
             <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-semibold flex-shrink-0">
-              {initiales(profilActif?.nomComplet)}
+              {initiales(utilisateur?.nomComplet)}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium truncate">{profilActif?.nomComplet ?? 'Aucun profil'}</p>
-              <p className="text-[11px] text-slate-400 truncate">{profilActif?.profil ?? '—'}</p>
+              <p className="text-xs font-medium truncate">{utilisateur?.nomComplet ?? '—'}</p>
+              <p className="text-[11px] text-slate-400 truncate">{utilisateur?.profil ?? '—'}</p>
             </div>
           </div>
-          {utilisateursActifs.length > 1 && (
-            <select
-              value={profilActif?.id ?? ''}
-              onChange={(e) => changer(e.target.value)}
-              className="w-full rounded-md bg-slate-800 border border-slate-700 text-xs px-2 py-1.5 text-slate-200"
-              aria-label="Changer de profil"
-            >
-              {utilisateursActifs.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.nomComplet} — {u.profil}
-                </option>
-              ))}
-            </select>
-          )}
+          <button
+            type="button"
+            onClick={() => deconnecter()}
+            className="w-full flex items-center justify-center gap-2 rounded-md border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-300 hover:bg-slate-700 hover:text-white transition"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Se déconnecter
+          </button>
         </div>
 
         <div className="px-5 py-3 border-t border-slate-700 text-xs text-slate-500">
-          v1.1 · Régie Publicitaire
+          v1.2 · Régie Publicitaire
         </div>
       </aside>
 
@@ -149,12 +129,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button>
           <h1 className="font-semibold text-foreground text-base">{currentPage}</h1>
           <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="hidden sm:inline">{profilActif?.profil ?? ''}</span>
+            <span className="hidden sm:inline">{utilisateur?.profil ?? ''}</span>
             <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold">
-              {initiales(profilActif?.nomComplet)}
+              {initiales(utilisateur?.nomComplet)}
             </div>
           </div>
         </header>
+
+        {utilisateur?.doitChangerMotDePasse && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-800 flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+            <span>
+              Mot de passe initial : pensez à le changer dans{' '}
+              <NavLink to="/parametres" className="font-semibold underline">Paramètres → Mon compte</NavLink>.
+            </span>
+          </div>
+        )}
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
@@ -166,16 +156,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <ShieldAlert className="w-10 h-10 mx-auto text-muted-foreground" />
                 <p className="font-semibold">Accès non autorisé</p>
                 <p className="text-sm text-muted-foreground">
-                  Le profil « {profilActif?.profil ?? 'inconnu'} » n’a pas accès à ce module.
-                  Changez de profil dans la barre latérale ou contactez un administrateur.
+                  Le profil « {utilisateur?.profil ?? 'inconnu'} » n’a pas accès à ce module.
+                  Contactez un administrateur ou reconnectez-vous avec un autre compte.
                 </p>
               </div>
             </div>
           )}
         </main>
       </div>
-
-      <Toaster />
     </div>
   );
 }

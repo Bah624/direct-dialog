@@ -24,24 +24,35 @@ jobs:
       - name: Compiler l'interface et le serveur
         run: yarn build
 
-      - name: Vérifier que le serveur répond
+      - name: Vérifier l'authentification et les endpoints
         run: |
+          set -e
+          export ADMIN_PASSWORD='ci-mot-de-passe-2026'
           PORT=8137 node server/dist/server.mjs &
-          for i in $(seq 1 20); do
-            if curl -fsS http://127.0.0.1:8137/healthz; then exit 0; fi
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8137/healthz >/dev/null; then break; fi
             sleep 1
           done
-          echo "Le serveur n'a pas répondu" >&2
-          exit 1
 
-      - name: Vérifier les endpoints de lecture
-        run: |
+          echo "— sans session, l'API doit refuser"
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8137/api/getClients \
+            -H 'Content-Type: application/json' -d '{"inputs":{}}')
+          echo "getClients sans session → $code"
+          [ "$code" = "401" ]
+
+          echo "— connexion administrateur"
+          curl -fsS -c /tmp/cookies.txt -X POST http://127.0.0.1:8137/api/auth/connexion \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"admin@direct-dialog.local\",\"motDePasse\":\"$ADMIN_PASSWORD\"}" >/dev/null
+
+          echo "— endpoints métier"
           for ep in getDashboard getClients getCampagnes getEmplacements getReservations \
-                    getImpressions getFactures getStock getSorties getCollaborateurs getReports; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:8137/api/$ep" \
-              -H 'Content-Type: application/json' -d '{"inputs":{}}')
+                    getImpressions getFactures getStock getSorties getCollaborateurs getReports \
+                    getParametres getUtilisateurs; do
+            code=$(curl -sS -b /tmp/cookies.txt -o /dev/null -w '%{http_code}' \
+              -X POST "http://127.0.0.1:8137/api/$ep" -H 'Content-Type: application/json' -d '{"inputs":{}}')
             echo "$ep → $code"
-            [ "$code" = "200" ] || exit 1
+            [ "$code" = "200" ]
           done
 
       - name: Construire l'image Docker

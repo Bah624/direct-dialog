@@ -36,7 +36,8 @@ import type { default as _SaveUtilisateurEp } from '../src/api/saveUtilisateur';
 import type { default as _DeleteUtilisateurEp } from '../src/api/deleteUtilisateur';
 import type { default as _GetParametresEp } from '../src/api/getParametres';
 import type { default as _SaveParametresEp } from '../src/api/saveParametres';
-import type { default as _SetProfilActifEp } from '../src/api/setProfilActif';
+import type { default as _ChangerMotDePasseEp } from '../src/api/changerMotDePasse';
+import type { default as _ReinitialiserMotDePasseEp } from '../src/api/reinitialiserMotDePasse';
 
 type _DeleteCampagneCfg = typeof _DeleteCampagneEp;
 export type DeleteCampagneInputType = NonNullable<_DeleteCampagneCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_DeleteCampagneCfg['execute']>[0]['input'];
@@ -241,7 +242,12 @@ export type SaveParametresInputType = NonNullable<_SaveParametresCfg['inputSchem
 export type SaveParametresOutputType = Awaited<ReturnType<_SaveParametresCfg['execute']>>;
 export const saveParametres = createCaller<SaveParametresInputType, SaveParametresOutputType>('saveParametres');
 
-type _SetProfilActifCfg = typeof _SetProfilActifEp;
-export type SetProfilActifInputType = NonNullable<_SetProfilActifCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_SetProfilActifCfg['execute']>[0]['input'];
-export type SetProfilActifOutputType = Awaited<ReturnType<_SetProfilActifCfg['execute']>>;
-export const setProfilActif = createCaller<SetProfilActifInputType, SetProfilActifOutputType>('setProfilActif');
+type _ChangerMotDePasseCfg = typeof _ChangerMotDePasseEp;
+export type ChangerMotDePasseInputType = NonNullable<_ChangerMotDePasseCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_ChangerMotDePasseCfg['execute']>[0]['input'];
+export type ChangerMotDePasseOutputType = Awaited<ReturnType<_ChangerMotDePasseCfg['execute']>>;
+export const changerMotDePasse = createCaller<ChangerMotDePasseInputType, ChangerMotDePasseOutputType>('changerMotDePasse');
+
+type _ReinitialiserMotDePasseCfg = typeof _ReinitialiserMotDePasseEp;
+export type ReinitialiserMotDePasseInputType = NonNullable<_ReinitialiserMotDePasseCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_ReinitialiserMotDePasseCfg['execute']>[0]['input'];
+export type ReinitialiserMotDePasseOutputType = Awaited<ReturnType<_ReinitialiserMotDePasseCfg['execute']>>;
+export const reinitialiserMotDePasse = createCaller<ReinitialiserMotDePasseInputType, ReinitialiserMotDePasseOutputType>('reinitialiserMotDePasse');

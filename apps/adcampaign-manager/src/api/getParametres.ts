@@ -16,31 +16,33 @@ const societeSchema = z.object({
   tauxTva: z.number(),
 });
 
-const utilisateurLeger = z.object({
+const utilisateurSchema = z.object({
   id: z.string(),
   nomComplet: z.string().optional(),
   email: z.string().optional(),
+  telephone: z.string().optional(),
   profil: z.string().optional(),
   statut: z.string().optional(),
+  doitChangerMotDePasse: z.boolean().optional(),
 });
 
 export default createEndpoint({
-  description: 'Réglages, droits et profil actif de l’application',
+  description: 'Réglages, droits et utilisateur connecté',
   inputSchema: z.object({}).optional(),
   outputSchema: z.object({
     societe: societeSchema,
     permissions: z.record(z.string(), z.record(z.string(), z.object({ voir: z.boolean(), gerer: z.boolean() }))),
     profils: z.array(z.string()),
     modules: z.array(z.string()),
-    profilActif: utilisateurLeger.nullable(),
-    utilisateurs: z.array(utilisateurLeger),
+    utilisateur: utilisateurSchema.nullable(),
+    utilisateurs: z.array(utilisateurSchema),
     statistiques: z.record(z.string(), z.number()),
   }),
   execute: async () => {
-    const [societe, permissions, profil, { records: utilisateurs }] = await Promise.all([
+    const [societe, permissions, connecte, { records: utilisateurs }] = await Promise.all([
       settings.societe(),
       settings.permissions(),
-      utilisateurActif(),
+      Promise.resolve(utilisateurActif()),
       zite.utilisateurs.findAll({ limit: 500 }),
     ]);
 
@@ -70,13 +72,14 @@ export default createEndpoint({
       permissions: permissions as any,
       profils: [...PROFILS],
       modules: [...MODULES],
-      profilActif: profil
+      utilisateur: connecte
         ? {
-            id: profil.id,
-            nomComplet: profil.nomComplet,
-            email: profil.email,
-            profil: profil.profil,
-            statut: profil.statut,
+            id: connecte.id,
+            nomComplet: connecte.nomComplet,
+            email: connecte.email,
+            profil: connecte.profil,
+            statut: connecte.statut,
+            doitChangerMotDePasse: Boolean(connecte.doitChangerMotDePasse),
           }
         : null,
       utilisateurs: utilisateurs.map((u) => ({

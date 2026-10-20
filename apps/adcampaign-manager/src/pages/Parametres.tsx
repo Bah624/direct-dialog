@@ -4,6 +4,7 @@ import {
   saveUtilisateur,
   deleteUtilisateur,
   saveParametres,
+  changerMotDePasse,
   GetUtilisateursOutputType,
 } from 'zitejs/api';
 import { Button } from '@project/components/ui/button';
@@ -24,8 +25,8 @@ import {
 import { Badge } from '@project/components/ui/badge';
 import { Skeleton } from '@project/components/ui/skeleton';
 import {
-  Building2, Check, Download, Info, Pencil, RefreshCw, Save, Search, ShieldCheck,
-  Trash2, UserPlus, Users, X,
+  Building2, Check, Download, Info, KeyRound, Pencil, RefreshCw, Save, Search,
+  ShieldCheck, Trash2, UserPlus, Users, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Toaster } from '@project/components/ui/sonner';
@@ -42,12 +43,14 @@ const UTILISATEUR_VIDE = {
   profil: 'Commercial',
   statut: 'Actif',
   notes: '',
+  motDePasse: '',
 };
 
 const ONGLETS = [
   { cle: 'general', libelle: 'Général', icone: Building2 },
   { cle: 'utilisateurs', libelle: 'Utilisateurs', icone: Users },
   { cle: 'roles', libelle: 'Rôles & accès', icone: ShieldCheck },
+  { cle: 'compte', libelle: 'Mon compte', icone: KeyRound },
   { cle: 'systeme', libelle: 'Système', icone: Info },
 ] as const;
 
@@ -113,6 +116,7 @@ export default function ParametresPage() {
       {onglet === 'general' && <OngletGeneral />}
       {onglet === 'utilisateurs' && <OngletUtilisateurs />}
       {onglet === 'roles' && <OngletRoles />}
+      {onglet === 'compte' && <OngletCompte />}
       {onglet === 'systeme' && <OngletSysteme onRafraichir={rafraichir} />}
 
       <Toaster />
@@ -273,9 +277,17 @@ function OngletUtilisateurs() {
     if (!form.nomComplet?.trim() || !form.email?.trim()) {
       return toast.error('Nom et e-mail requis');
     }
+    if (!form.id && (form.motDePasse ?? '').length < 8) {
+      return toast.error('Définissez un mot de passe d’au moins 8 caractères');
+    }
+    if (form.motDePasse && form.motDePasse.length < 8) {
+      return toast.error('Le mot de passe doit contenir au moins 8 caractères');
+    }
     setEnregistrement(true);
     try {
-      await saveUtilisateur(form as any);
+      const charge: Record<string, any> = { ...form };
+      if (!charge.motDePasse) delete charge.motDePasse;
+      await saveUtilisateur(charge as any);
       toast.success(form.id ? 'Utilisateur mis à jour' : 'Utilisateur créé');
       setDialogue(false);
       await charger();
@@ -432,6 +444,19 @@ function OngletUtilisateurs() {
                   <SelectItem value="Inactif">Inactif</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="md:col-span-2">
+              <Label>{form.id ? 'Nouveau mot de passe (facultatif)' : 'Mot de passe initial'}</Label>
+              <Input
+                type="password"
+                autoComplete="new-password"
+                value={form.motDePasse ?? ''}
+                onChange={(e) => setForm({ ...form, motDePasse: e.target.value })}
+                placeholder={form.id ? 'Laisser vide pour ne pas modifier' : '8 caractères minimum'}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                L’utilisateur devra le changer à sa première connexion.
+              </p>
             </div>
             <div className="md:col-span-2">
               <Label>Notes</Label>
@@ -621,7 +646,7 @@ function BoutonDroit({
 /* ------------------------------------------------------------------ Système */
 
 function OngletSysteme({ onRafraichir }: { onRafraichir: () => Promise<void> }) {
-  const { data, profilActif } = useSession();
+  const { data, utilisateur } = useSession();
   const stats = data?.statistiques ?? {};
   const [exportEnCours, setExportEnCours] = useState(false);
 
@@ -653,11 +678,11 @@ function OngletSysteme({ onRafraichir }: { onRafraichir: () => Promise<void> }) 
           <CardDescription>Informations techniques de l’installation.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <Ligne libelle="Version" valeur="1.1.0" />
+          <Ligne libelle="Version" valeur="1.2.0" />
           <Ligne libelle="Société" valeur={data?.societe?.nom ?? '—'} />
           <Ligne libelle="Devise" valeur={data?.societe?.devise ?? '—'} />
           <Ligne libelle="TVA par défaut" valeur={`${data?.societe?.tauxTva ?? 0} %`} />
-          <Ligne libelle="Profil actif" valeur={profilActif ? `${profilActif.nomComplet} (${profilActif.profil})` : '—'} />
+          <Ligne libelle="Compte connecté" valeur={utilisateur ? `${utilisateur.nomComplet} (${utilisateur.profil})` : '—'} />
         </CardContent>
       </Card>
 
@@ -687,6 +712,97 @@ function OngletSysteme({ onRafraichir }: { onRafraichir: () => Promise<void> }) 
           </Button>
           <Button variant="outline" onClick={() => onRafraichir()} className="gap-2">
             <RefreshCw className="w-4 h-4" /> Rafraîchir
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Toaster />
+    </div>
+  );
+}
+
+
+/* --------------------------------------------------------------- Mon compte */
+
+function OngletCompte() {
+  const { utilisateur, rafraichir } = useSession();
+  const [ancien, setAncien] = useState('');
+  const [nouveau, setNouveau] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [enCours, setEnCours] = useState(false);
+
+  const enregistrer = async () => {
+    if (nouveau.length < 8) return toast.error('8 caractères minimum');
+    if (nouveau !== confirmation) return toast.error('Les deux saisies ne correspondent pas');
+    setEnCours(true);
+    try {
+      await changerMotDePasse({ ancien, nouveau });
+      await rafraichir();
+      setAncien('');
+      setNouveau('');
+      setConfirmation('');
+      toast.success('Mot de passe modifié');
+    } catch (erreur: any) {
+      toast.error(erreur?.userFacingMessage ?? erreur?.message ?? 'Modification impossible');
+    } finally {
+      setEnCours(false);
+    }
+  };
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Mon compte</CardTitle>
+          <CardDescription>Informations du compte connecté.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <Ligne libelle="Nom" valeur={utilisateur?.nomComplet ?? '—'} />
+          <Ligne libelle="E-mail" valeur={utilisateur?.email ?? '—'} />
+          <Ligne libelle="Profil" valeur={utilisateur?.profil ?? '—'} />
+          <Ligne
+            libelle="Mot de passe"
+            valeur={utilisateur?.doitChangerMotDePasse ? 'à changer' : 'défini'}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Changer de mot de passe</CardTitle>
+          <CardDescription>8 caractères minimum.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Mot de passe actuel</Label>
+            <Input
+              type="password"
+              autoComplete="current-password"
+              value={ancien}
+              onChange={(e) => setAncien(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label>Nouveau mot de passe</Label>
+            <Input
+              type="password"
+              autoComplete="new-password"
+              value={nouveau}
+              onChange={(e) => setNouveau(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label>Confirmation</Label>
+            <Input
+              type="password"
+              autoComplete="new-password"
+              value={confirmation}
+              onChange={(e) => setConfirmation(e.target.value)}
+            />
+          </div>
+          <Button onClick={enregistrer} disabled={enCours} className="w-full gap-2">
+            <KeyRound className="w-4 h-4" />
+            {enCours ? 'Enregistrement…' : 'Changer le mot de passe'}
           </Button>
         </CardContent>
       </Card>

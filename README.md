@@ -33,6 +33,18 @@ curl -fsSL .../install.sh | sh -s -- --dir /opt/direct-dialog --port 8090 --ref 
 **Mise à jour** : relancer exactement la même commande. Le code est remplacé, les données
 sont conservées dans le volume Docker `direct-dialog-data`.
 
+### Première connexion
+
+Au premier démarrage, un compte administrateur est créé. Son mot de passe est soit celui
+fourni dans `ADMIN_PASSWORD`, soit généré aléatoirement et affiché dans les journaux :
+
+```bash
+docker compose logs app | grep -A5 "Connexion administrateur"
+```
+
+Connectez-vous avec `admin@direct-dialog.local`, puis changez le mot de passe dans
+**Paramètres → Mon compte**.
+
 ### Image publiée (installation instantanée)
 
 Chaque version publiée produit une image sur GitHub Container Registry :
@@ -122,10 +134,17 @@ modifiable dans **Rôles & accès**.
   (`admin@direct-dialog.local`) ; vous pouvez le renommer puis créer les comptes de votre
   équipe.
 
-> **À noter** : il n'y a pas encore de mot de passe. Le profil actif est un réglage serveur
-> (application mono-utilisateur) : il structure les droits et l'interface, mais ne constitue
-> pas encore une barrière d'authentification. La prochaine étape est la connexion nominative
-> (mot de passe + sessions), le modèle de données étant déjà en place.
+### Authentification
+
+- Chaque utilisateur se connecte avec son **e-mail et son mot de passe**.
+- Les mots de passe sont chiffrés en **scrypt** avec un sel aléatoire ; ils ne sont jamais
+  stockés ni renvoyés en clair.
+- La session repose sur un **cookie HttpOnly** signé (jeton aléatoire dont seule l'empreinte
+  SHA-256 est stockée), valable 7 jours, avec expiration côté serveur.
+- Après 8 tentatives échouées, la connexion est bloquée 5 minutes.
+- Un administrateur peut **réinitialiser** un mot de passe depuis l'onglet Utilisateurs ; les
+  sessions ouvertes de l'utilisateur sont alors coupées.
+- Chacun change son mot de passe dans **Paramètres → Mon compte**.
 
 ---
 
@@ -225,7 +244,11 @@ ZITE_OPENAI_ACCESS_TOKEN=sk-... docker compose up -d
 | `curl /healthz` | `{"status":"ok", …}` |
 | Création d'utilisateur + changement de profil | menu filtré (machiniste → Tableau de bord + Travaux) |
 | Contrôle d'accès serveur | `getFactures` / `saveParametres` → `403` avec le profil Machiniste |
-| Page Paramètres | 4 onglets, 13 modules × 11 profils de droits |
+| Page Paramètres | 5 onglets, 13 modules × 11 profils de droits |
+| API sans session | `401` (endpoints et export refusés) |
+| Connexion (bon/mauvais mot de passe) | `200` / `401` |
+| Changement de mot de passe | ancien refusé, nouveau accepté |
+| Déconnexion | session invalidée (`401` ensuite) |
 
 ---
 
@@ -254,9 +277,8 @@ d'envoi de fichiers.
 
 ## Limites connues (version de test)
 
-- **Pas encore de mot de passe** : le profil actif structure les droits et l'interface, mais
-  ne constitue pas une barrière d'authentification. Connexion nominative prévue à l'étape
-  suivante (le modèle utilisateurs est en place).
+- **HTTPS non fourni** : pour une mise en production, placer l'application derrière un
+  reverse proxy TLS et activer `COOKIE_SECURE=1`.
 - **Mono-utilisateur** : stockage JSON réécrit à chaque modification (à remplacer par
   PostgreSQL ou SQLite pour une exploitation multi-postes).
 - **E-mails non expédiés**, intégrations tierces désactivées (Stripe, Google Maps…), non

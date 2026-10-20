@@ -1,20 +1,20 @@
-// Session applicative : profil actif, droits, réglages société.
+// Session applicative : utilisateur connecté, droits, réglages société.
 //
-// L'application est mono-utilisateur : le profil actif est un réglage côté
-// serveur, choisi dans la barre latérale. Toutes les pages s'appuient sur ce
-// contexte pour filtrer les menus et les actions.
+// L'utilisateur est authentifié par le serveur (cookie de session). Tant que la
+// session est absente ou expirée, l'application affiche l'écran de connexion.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getParametres, setProfilActif, GetParametresOutputType } from 'zitejs/api';
+import { getParametres, GetParametresOutputType } from 'zitejs/api';
 
 type Session = {
   pret: boolean;
   data: GetParametresOutputType | null;
-  profilActif: GetParametresOutputType['profilActif'];
+  utilisateur: GetParametresOutputType['utilisateur'];
   /** Vérifie un droit ; tant que les réglages ne sont pas chargés, on laisse passer. */
   permis: (module: string, action?: 'voir' | 'gerer') => boolean;
   rafraichir: () => Promise<void>;
-  changerProfil: (utilisateurId: string) => Promise<void>;
+  connecter: (email: string, motDePasse: string) => Promise<void>;
+  deconnecter: () => Promise<void>;
 };
 
 const SessionContext = createContext<Session | null>(null);
@@ -27,8 +27,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     try {
       const resultat = await getParametres({});
       setData(resultat);
-    } catch (erreur) {
-      console.error('Chargement des paramètres impossible', erreur);
+    } catch {
+      // 401 : session absente ou expirée.
+      setData(null);
     } finally {
       setPret(true);
     }
@@ -38,21 +39,36 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     rafraichir();
   }, [rafraichir]);
 
-  const changerProfil = useCallback(
-    async (utilisateurId: string) => {
-      await setProfilActif({ utilisateurId });
+  const connecter = useCallback(
+    async (email: string, motDePasse: string) => {
+      const reponse = await fetch('/api/auth/connexion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, motDePasse }),
+      });
+      const corps = await reponse.json().catch(() => ({}));
+      if (!reponse.ok) {
+        throw new Error(corps?.message ?? 'Connexion impossible.');
+      }
       await rafraichir();
     },
     [rafraichir],
   );
 
+  const deconnecter = useCallback(async () => {
+    try {
+      await fetch('/api/auth/deconnexion', { method: 'POST' });
+    } finally {
+      setData(null);
+    }
+  }, []);
+
   const valeur = useMemo<Session>(() => {
-    const profil = data?.profilActif?.profil;
+    const profil = data?.utilisateur?.profil;
 
     const permis = (module: string, action: 'voir' | 'gerer' = 'voir') => {
       if (!data) return true;
       if (!profil) return true;
-      // Le profil administrateur garde toujours l'accès complet.
       if (profil === 'Administrateur') return true;
       const acces = data.permissions?.[profil]?.[module];
       if (!acces) return false;
@@ -62,12 +78,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return {
       pret,
       data,
-      profilActif: data?.profilActif ?? null,
+      utilisateur: data?.utilisateur ?? null,
       permis,
       rafraichir,
-      changerProfil,
+      connecter,
+      deconnecter,
     };
-  }, [data, pret, rafraichir, changerProfil]);
+  }, [data, pret, rafraichir, connecter, deconnecter]);
 
   return <SessionContext.Provider value={valeur}>{children}</SessionContext.Provider>;
 }

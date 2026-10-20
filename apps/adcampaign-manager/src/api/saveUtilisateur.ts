@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { zite } from 'zitejs/db';
 import { createEndpoint, ZiteError } from 'zitejs/backend';
 import { PROFILS } from '../../../../server/src/permissions';
+import { hasherMotDePasse, validerMotDePasse } from '../../../../server/src/auth';
 
 const utilisateurInput = z.object({
   id: z.string().optional(),
@@ -11,6 +12,8 @@ const utilisateurInput = z.object({
   profil: z.string().min(1, 'Le profil est requis'),
   statut: z.string().default('Actif'),
   notes: z.string().optional(),
+  /** Obligatoire à la création ; facultatif en modification (réinitialisation). */
+  motDePasse: z.string().optional(),
 });
 
 export default createEndpoint({
@@ -41,9 +44,8 @@ export default createEndpoint({
 
     // On ne doit jamais perdre le dernier administrateur actif.
     const adminsActifs = records.filter((u) => u.profil === 'Administrateur' && u.statut !== 'Inactif');
-    const concerneAdmin = input.id
-      ? records.find((u) => u.id === input.id)?.profil === 'Administrateur'
-      : false;
+    const cible = input.id ? records.find((u) => u.id === input.id) : undefined;
+    const concerneAdmin = cible?.profil === 'Administrateur';
     const devientNonAdmin = input.profil !== 'Administrateur' || input.statut === 'Inactif';
     if (concerneAdmin && devientNonAdmin && adminsActifs.length <= 1) {
       throw new ZiteError({
@@ -53,7 +55,7 @@ export default createEndpoint({
       });
     }
 
-    const record = {
+    const record: Record<string, any> = {
       nomComplet: input.nomComplet.trim(),
       email,
       telephone: input.telephone ?? '',
@@ -61,6 +63,21 @@ export default createEndpoint({
       statut: input.statut,
       notes: input.notes ?? '',
     };
+
+    if (input.motDePasse) {
+      const erreur = validerMotDePasse(input.motDePasse);
+      if (erreur) {
+        throw new ZiteError({ code: 'BAD_REQUEST', message: erreur, userFacingMessage: erreur });
+      }
+      record.motDePasseHash = hasherMotDePasse(input.motDePasse);
+      record.doitChangerMotDePasse = true;
+    } else if (!input.id) {
+      throw new ZiteError({
+        code: 'BAD_REQUEST',
+        message: 'Un mot de passe est requis à la création.',
+        userFacingMessage: 'Définissez un mot de passe initial.',
+      });
+    }
 
     if (input.id) {
       const res = await zite.utilisateurs.update({ id: input.id, record });

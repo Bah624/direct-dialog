@@ -434,6 +434,10 @@ export type UtilisateursRecordType = {
   /** "Statut" : Actif ou Inactif */
   statut?: "Actif" | "Inactif" | string;
   notes?: string;
+  /** Mot de passe chiffré (scrypt). Jamais exposé par l'API. */
+  motDePasseHash?: string;
+  /** Demande de changement de mot de passe à la prochaine connexion. */
+  doitChangerMotDePasse?: boolean;
   /** "Dernière Connexion" (YYYY-MM-DD) */
   derniereConnexion?: string;
   /** Read-only. "Date Création". */
@@ -448,7 +452,24 @@ export type UtilisateursRecordInput = {
   profil?: string | null;
   statut?: string | null;
   notes?: string | null;
+  motDePasseHash?: string | null;
+  doitChangerMotDePasse?: string | boolean | null;
   derniereConnexion?: string | null;
+};
+
+/** A record in the "Sessions" table (jetons de connexion). */
+export type SessionsRecordType = {
+  id: string;
+  jeton?: string;
+  utilisateurId?: string;
+  expireLe?: string;
+  dateCreation?: string;
+};
+
+export type SessionsRecordInput = {
+  jeton?: string | null;
+  utilisateurId?: string | null;
+  expireLe?: string | null;
 };
 
 /** A record in the "Parametres" table (réglages clé/valeur). */
@@ -490,6 +511,7 @@ export const zite = {
   collaborateurs: createTableClient<CollaborateursRecordType, CollaborateursRecordInput>('Collaborateurs'), // "Collaborateurs"
   utilisateurs: createTableClient<UtilisateursRecordType, UtilisateursRecordInput>('Utilisateurs'), // "Utilisateurs"
   parametres: createTableClient<ParametresRecordType, ParametresRecordInput>('Parametres'), // "Paramètres"
+  sessions: createTableClient<SessionsRecordType, SessionsRecordInput>('Sessions'), // "Sessions"
   sql: createSqlClient(),
   auth: createAuthClient<ZiteAuthUser>(),
 };

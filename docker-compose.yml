@@ -20,6 +20,9 @@ services:
       # Facultatif : sans clé, la page « Agent IA Vocal » affiche une erreur,
       # le reste de l'application fonctionne normalement.
       ZITE_OPENAI_ACCESS_TOKEN: "${ZITE_OPENAI_ACCESS_TOKEN:-}"
+      # Mot de passe du compte administrateur créé au premier démarrage.
+      # Laissé vide : un mot de passe aléatoire est généré et affiché dans les logs.
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
     volumes:
       # Données persistantes : base locale, fichiers envoyés, boîte d'envoi.
       - app-data:/app/data

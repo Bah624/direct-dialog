@@ -216,6 +216,8 @@ export const TABLES: Record<string, TableSchema> = {
       profil: "single_select", // Profil
       statut: "single_select", // Statut
       notes: "long_text", // Notes
+      motDePasseHash: "single_line_text", // Mot de passe (scrypt)
+      doitChangerMotDePasse: "checkbox", // Changement demandé
       derniereConnexion: "date", // Dernière Connexion
       dateCreation: "created_at", // Date Création
     },
@@ -229,6 +231,18 @@ export const TABLES: Record<string, TableSchema> = {
       cle: "single_line_text", // Clé
       valeur: "long_text", // Valeur (JSON)
       dateMiseAJour: "updated_at", // Dernière Mise à Jour
+    },
+  },
+  Sessions: {
+    className: "Sessions",
+    tableId: "local-sessions",
+    name: "Sessions",
+    primaryField: "jeton",
+    fields: {
+      jeton: "single_line_text", // Jeton (empreinte SHA-256)
+      utilisateurId: "single_line_text", // Utilisateur
+      expireLe: "single_line_text", // Expiration (ISO)
+      dateCreation: "created_at", // Date Création
     },
   },
 };

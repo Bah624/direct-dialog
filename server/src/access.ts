@@ -1,12 +1,10 @@
 // Contrôle d'accès serveur : chaque endpoint est rattaché à un module et à une
-// action. Le profil actif (réglage `profilActifId`) détermine les droits.
-//
-// L'application est mono-utilisateur : le profil actif est un réglage global,
-// choisi dans la barre latérale. L'authentification nominative viendra ensuite.
+// action. L'utilisateur authentifié (session) détermine les droits.
 
-import { zite } from 'zitejs/db';
 import { can, type ModuleKey } from './permissions';
 import { settings } from './settings';
+import { utilisateurCourant } from './requete';
+import type { Utilisateur } from './auth';
 
 type Regle = { module: ModuleKey; action: 'voir' | 'gerer' };
 
@@ -64,24 +62,29 @@ export const ENDPOINT_ACCESS: Record<string, Regle> = {
   getUtilisateurs: { module: 'utilisateurs', action: 'voir' },
   saveUtilisateur: { module: 'utilisateurs', action: 'gerer' },
   deleteUtilisateur: { module: 'utilisateurs', action: 'gerer' },
+  reinitialiserMotDePasse: { module: 'utilisateurs', action: 'gerer' },
 
   // Réglages
   saveParametres: { module: 'parametres', action: 'gerer' },
   exportDonnees: { module: 'parametres', action: 'gerer' },
 };
 
-export type UtilisateurActif = {
-  id: string;
-  nomComplet?: string;
-  email?: string;
-  profil?: string;
-  statut?: string;
-};
+export type UtilisateurActif = Pick<
+  Utilisateur,
+  'id' | 'nomComplet' | 'email' | 'profil' | 'statut' | 'doitChangerMotDePasse'
+>;
 
-export async function utilisateurActif(): Promise<UtilisateurActif | null> {
-  const id = await settings.profilActifId();
-  if (!id) return null;
-  return (await zite.utilisateurs.findOne({ id })) ?? null;
+export function utilisateurActif(): UtilisateurActif | null {
+  const utilisateur = utilisateurCourant();
+  if (!utilisateur) return null;
+  return {
+    id: utilisateur.id,
+    nomComplet: utilisateur.nomComplet,
+    email: utilisateur.email,
+    profil: utilisateur.profil,
+    statut: utilisateur.statut,
+    doitChangerMotDePasse: Boolean(utilisateur.doitChangerMotDePasse),
+  };
 }
 
 export async function autoriser(
@@ -90,11 +93,10 @@ export async function autoriser(
   const regle = ENDPOINT_ACCESS[endpoint];
   if (!regle) return { autorise: true };
 
-  const utilisateur = await utilisateurActif();
-  // Aucun profil sélectionné (installation neuve) : on ne bloque pas.
-  if (!utilisateur) return { autorise: true };
+  const utilisateur = utilisateurCourant();
+  if (!utilisateur) return { autorise: false, message: 'Session expirée. Reconnectez-vous.' };
   if (utilisateur.statut === 'Inactif') {
-    return { autorise: false, message: 'Ce profil est désactivé.' };
+    return { autorise: false, message: 'Ce compte est désactivé.' };
   }
   // Le profil administrateur ne peut pas se verrouiller lui-même hors de l'app.
   if (utilisateur.profil === 'Administrateur') return { autorise: true };

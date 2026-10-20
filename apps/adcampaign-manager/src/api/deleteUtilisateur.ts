@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { zite } from 'zitejs/db';
 import { createEndpoint, ZiteError } from 'zitejs/backend';
+import { detruireSessionsDe } from '../../../../server/src/auth';
 
 export default createEndpoint({
   description: 'Supprimer un utilisateur',
@@ -22,6 +23,7 @@ export default createEndpoint({
       }
     }
 
+    await detruireSessionsDe(input.id);
     await zite.utilisateurs.delete({ id: input.id });
 
     // Si le profil actif a été supprimé, on bascule sur un administrateur.

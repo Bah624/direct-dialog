@@ -15,6 +15,8 @@ import { createSdkBridge } from './sdk-bridge';
 import { createEmailSender } from './email';
 import { settings, DEFAULT_SOCIETE } from './settings';
 import { DEFAULT_PERMISSIONS } from './permissions';
+import { hasherMotDePasse, purgerSessions } from './auth';
+import crypto from 'node:crypto';
 import seed from '../data/seed.json';
 
 export type Runtime = {
@@ -38,6 +40,7 @@ export async function bootstrap(): Promise<Runtime> {
   (globalThis as any).__wrapSdkCall = createSdkBridge({ store, sendEmail });
 
   await seedDefaults();
+  await purgerSessions();
 
   return { store, dataDir };
 }
@@ -49,6 +52,10 @@ export async function bootstrap(): Promise<Runtime> {
 async function seedDefaults() {
   const { records } = await zite.utilisateurs.findAll({ limit: 10 });
 
+  // Mot de passe administrateur : fourni par l'environnement, sinon généré.
+  const motDePasseFourni = process.env.ADMIN_PASSWORD;
+  const motDePasse = motDePasseFourni || crypto.randomBytes(9).toString('base64url');
+
   let administrateur = records[0];
   if (!administrateur) {
     administrateur = await zite.utilisateurs.create({
@@ -59,20 +66,44 @@ async function seedDefaults() {
         profil: 'Administrateur',
         statut: 'Actif',
         notes: 'Profil créé automatiquement à l’installation.',
+        motDePasseHash: hasherMotDePasse(motDePasse),
+        doitChangerMotDePasse: !motDePasseFourni,
       },
     });
-    console.log(
-      `[direct-dialog] profil administrateur créé : ${administrateur.email} (id ${administrateur.id})`,
+    afficherIdentifiants(administrateur.email ?? 'admin@direct-dialog.local', motDePasse, !motDePasseFourni);
+  } else if (!administrateur.motDePasseHash) {
+    // Mise à niveau d'une installation existante (v1.1 sans mot de passe).
+    const motDePasseMigration = process.env.ADMIN_PASSWORD || crypto.randomBytes(9).toString('base64url');
+    await zite.utilisateurs.update({
+      id: administrateur.id,
+      record: {
+        motDePasseHash: hasherMotDePasse(motDePasseMigration),
+        doitChangerMotDePasse: !process.env.ADMIN_PASSWORD,
+      },
+    });
+    afficherIdentifiants(
+      administrateur.email ?? 'admin@direct-dialog.local',
+      motDePasseMigration,
+      !process.env.ADMIN_PASSWORD,
     );
   }
 
-  if (!(await settings.profilActifId())) {
-    await settings.set('profilActifId', administrateur.id);
-  }
   if (!(await settings.get('permissions', null))) {
     await settings.set('permissions', DEFAULT_PERMISSIONS);
   }
   if (!(await settings.get('societe', null))) {
     await settings.set('societe', DEFAULT_SOCIETE);
   }
+}
+
+function afficherIdentifiants(email: string, motDePasse: string, genere: boolean) {
+  console.log('[direct-dialog] ─────────────────────────────────────────────');
+  console.log('[direct-dialog]  Connexion administrateur');
+  console.log(`[direct-dialog]  e-mail       : ${email}`);
+  console.log(`[direct-dialog]  mot de passe : ${motDePasse}`);
+  if (genere) {
+    console.log('[direct-dialog]  (généré automatiquement — à changer après la');
+    console.log('[direct-dialog]   première connexion, onglet Paramètres)');
+  }
+  console.log('[direct-dialog] ─────────────────────────────────────────────');
 }
