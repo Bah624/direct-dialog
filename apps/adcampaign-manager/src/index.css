@@ -148,3 +148,54 @@ html.immersif .cockpit {
   font: inherit;
   background: #e8eef5;
 }
+
+/* Panneaux de la carte 3D : face plate, bord net, aucun dégradé. */
+.dd-bb {
+  --pin: #38bdf8;
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+.dd-bb-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 10px 7px;
+  border: 1.5px solid var(--pin);
+  border-radius: 8px;
+  background: rgba(8, 13, 24, 0.92);
+  color: #f8fafc;
+  font: 600 12px/1.2 system-ui, sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px rgba(2, 6, 23, 0.55), 0 8px 20px rgba(2, 6, 23, 0.45);
+}
+.dd-bb-carte small {
+  font-weight: 500;
+  font-size: 10px;
+  color: rgba(226, 232, 240, 0.7);
+}
+.dd-bb-tige {
+  display: block;
+  width: 1.5px;
+  height: 16px;
+  margin: 0 auto;
+  background: var(--pin);
+}
+.dd-bb-sol {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: -8px auto 0;
+  border: 2px solid var(--pin);
+  border-radius: 50%;
+  box-shadow: 0 0 10px -2px var(--pin);
+}
+.dd-bb-actif .dd-bb-carte {
+  background: #0b1220;
+  border-width: 2px;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.4), 0 8px 20px rgba(2, 6, 23, 0.45);
+}

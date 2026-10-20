@@ -10,6 +10,7 @@ import { Label } from '@project/components/ui/label';
 import { Plus, Search, Pencil, Trash2, MapPin, List, Map as MapIcon, Crosshair, Navigation, ExternalLink } from 'lucide-react';
 import StatusBadge from '@/components/StatusBadge';
 import CartePanneaux from '@/components/CartePanneaux';
+import Carte3DPanneaux from '@/components/Carte3DPanneaux';
 import { Skeleton } from '@project/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Toaster } from '@project/components/ui/sonner';
@@ -178,7 +179,7 @@ export default function PanneauxPage() {
 
       {vue === 'carte' ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-          <CartePanneaux
+          <Carte3DPanneaux
             panneaux={emplacements}
             selection={selection}
             onSelect={setSelection}
@@ -203,8 +204,8 @@ export default function PanneauxPage() {
                   />
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Cliquez un marqueur pour voir le panneau, puis « Modifier » pour ajuster ses
-                  coordonnées GPS.
+                  Carte satellite 3D : cliquez un panneau pour ouvrir sa fiche, puis « Modifier »
+                  pour ajuster ses coordonnées GPS.
                 </p>
               </CardContent>
             </Card>

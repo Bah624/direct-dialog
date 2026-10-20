@@ -125,11 +125,13 @@ les profils qui n'ont pas accès à la facturation.
 Le module « Emplacements » devient **Panneaux**. Chaque panneau peut porter ses
 **coordonnées GPS** et être localisé sur une carte.
 
-![Carte des panneaux](docs/carte-panneaux.png)
+![Carte des panneaux](docs/carte-3d.png)
 
-- **Vue Liste / Vue Carte** dans le module Panneaux.
-- La carte affiche un **marqueur coloré par disponibilité** (vert disponible, ambre réservé,
-  rouge occupé, gris en maintenance) et cadre automatiquement l'ensemble des panneaux.
+- **Vue Liste / Vue Carte 3D** dans le module Panneaux.
+- La carte 3D affiche le **satellite** et les **bâtiments en relief** (OpenStreetMap), avec un
+  bouton **Vue plan / Vue 3D** et un recentrage automatique sur la ville des panneaux.
+- Chaque panneau est un **bandeau plat et net** : bordure fine à la couleur de disponibilité,
+  nom, ville, tige et repère au sol — sans dégradé ni effet de relief.
 - Cliquer un marqueur ouvre la fiche du panneau (type, format, prix, coordonnées) avec un
   bouton **Itinéraire** vers Google Maps.
 - Une colonne **Coordonnées GPS** apparaît dans la liste, et un bouton localise le panneau
