@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import Layout from '@/components/Layout';
@@ -14,6 +15,9 @@ import ReportsPage from '@/pages/Reports';
 import CollaborateursPage from '@/pages/Collaborateurs';
 import ParametresPage from '@/pages/Parametres';
 import Connexion from '@/pages/Connexion';
+
+// Le cockpit embarque Three.js : chargé à la demande pour ne pas alourdir l'app.
+const CockpitPage = lazy(() => import('@/pages/Cockpit'));
 import { SessionProvider, useSession } from '@/lib/session';
 
 function Application() {
@@ -33,6 +37,20 @@ function Application() {
     <Layout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route
+          path="/cockpit"
+          element={
+            <Suspense
+              fallback={
+                <div className="h-full grid place-items-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              }
+            >
+              <CockpitPage />
+            </Suspense>
+          }
+        />
         <Route path="/campagnes" element={<Campagnes />} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/emplacements" element={<EmplacementsPage />} />

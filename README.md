@@ -2,7 +2,8 @@
 
 **Application de gestion pour régie publicitaire** : campagnes, clients, emplacements,
 réservations, travaux & impressions, facturation, stock, collaborateurs, rapports et
-assistant vocal — avec **gestion des utilisateurs par profil** et **droits d'accès par module**.
+assistant vocal — avec **gestion des utilisateurs par profil**, **droits d'accès par module**
+et un **cockpit 3D** temps réel de votre réseau d'affichage.
 
 [![CI](https://github.com/Bah624/direct-dialog/actions/workflows/ci.yml/badge.svg)](https://github.com/Bah624/direct-dialog/actions/workflows/ci.yml)
 [![Release](https://github.com/Bah624/direct-dialog/actions/workflows/release.yml/badge.svg)](https://github.com/Bah624/direct-dialog/actions/workflows/release.yml)
@@ -148,6 +149,29 @@ modifiable dans **Rôles & accès**.
 
 ---
 
+## Cockpit 3D (v1.3)
+
+![Cockpit 3D](docs/cockpit-3d.png)
+
+Un écran d'accueil immersif : votre réseau d'affichage représenté en **ville isométrique 3D**,
+chaque panneau publicitaire étant coloré selon sa disponibilité (Disponible, Réservé, Occupé,
+En maintenance).
+
+| Fonction | Détail |
+|---|---|
+| Scène | Ville procédurale, immeubles, avenues, circulation animée, éclairage nocturne |
+| Panneaux | Un panneau 3D par emplacement, avec sa référence, sa ville et son statut dessinés sur l'écran |
+| Caméra | Intro cinématique, rotation lente, orbite à la souris, zoom à la molette, recentrage |
+| Interaction | Clic sur un panneau ou sur la liste → cadrage automatique + fiche détaillée |
+| Filtres | Affichage par disponibilité (Tous / Disponible / Réservé / Occupé / En maintenance) |
+| HUD | Chiffre d'affaires, campagnes en cours, réservations en attente, travaux planifiés, horloge |
+| Robustesse | Three.js chargé à la demande ; repli sur un message clair si WebGL est indisponible |
+
+Le cockpit réutilise les données et les droits existants : il n'apparaît qu'aux profils ayant
+accès au tableau de bord ou aux emplacements, et n'ajoute aucune table.
+
+---
+
 ## Architecture
 
 L'application vient d'un projet Zite : le navigateur appelait `POST /api/<endpoint>` et le
@@ -186,6 +210,7 @@ server/
 │   └── endpoints.generated.ts (généré au build)
 ├── data/seed.json           données de départ
 └── build.mjs                compilation du serveur en un fichier autonome
+apps/adcampaign-manager/src/components/cockpit/  scène 3D (Three.js)
 scripts/dev.sh               lancement sans Docker
 install.sh                   installateur client
 .github/workflows/           CI (build + tests de fumée) et release (image GHCR)
@@ -249,6 +274,7 @@ ZITE_OPENAI_ACCESS_TOKEN=sk-... docker compose up -d
 | Connexion (bon/mauvais mot de passe) | `200` / `401` |
 | Changement de mot de passe | ancien refusé, nouveau accepté |
 | Déconnexion | session invalidée (`401` ensuite) |
+| Cockpit 3D | scène WebGL rendue, panneaux cliquables, cadrage + fiche détaillée |
 
 ---
 

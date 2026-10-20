@@ -35,6 +35,7 @@ export const MODULE_DESCRIPTIONS: Record<string, string> = {
 /** Route → module de droits. */
 export const PATH_MODULE: Record<string, string> = {
   '/': 'dashboard',
+  '/cockpit': 'dashboard',
   '/campagnes': 'campagnes',
   '/clients': 'clients',
   '/emplacements': 'emplacements',

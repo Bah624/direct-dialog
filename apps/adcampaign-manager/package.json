@@ -1,7 +1,7 @@
 {
   "name": "@project/adcampaign-manager",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -89,11 +89,12 @@
     "strip-color": "^0.1.0",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
+    "three": "^0.170.0",
     "tiptap-markdown": "^0.9.0",
     "use-debounce": "10.0.6",
     "vite-plugin-insert-html": "^1.0.3",
-    "zod": "3.24.2",
-    "zitejs": "0.9.136"
+    "zitejs": "0.9.136",
+    "zod": "3.24.2"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "0.72.1",
@@ -121,9 +122,11 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@types/strip-color": "^0.1.2",
+    "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.21",
     "cross-env": "^10.1.0",
+    "dropbox": "10.47.0",
     "estree-walker": "^3.0.3",
     "globals": "^15.15.0",
     "googleapis": "171.2.0",
@@ -138,8 +141,7 @@
     "tailwindcss": "^3.4.17",
     "twilio": "5.13.0",
     "typescript": "~5.7.3",
-    "vite": "^8.1.0",
-    "dropbox": "10.47.0"
+    "vite": "^8.1.0"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

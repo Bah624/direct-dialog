@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Megaphone, Users, MapPin, Printer, CalendarCheck, FileText, ChevronRight, Menu, X, Mic, Package, BarChart2, UserPlus, Settings, ShieldAlert, LogOut } from 'lucide-react';
+import { LayoutDashboard, Megaphone, Users, MapPin, Printer, CalendarCheck, FileText, ChevronRight, Menu, X, Mic, Package, BarChart2, UserPlus, Settings, ShieldAlert, LogOut, Boxes } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@project/components/lib/utils';
 import { useSession } from '@/lib/session';
@@ -16,6 +16,13 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { to: '/', label: 'Tableau de bord', icon: LayoutDashboard, module: 'dashboard' },
+  {
+    to: '/cockpit',
+    label: 'Cockpit 3D',
+    icon: Boxes,
+    module: 'dashboard',
+    modulesVisibles: ['dashboard', 'emplacements'],
+  },
   { to: '/campagnes', label: 'Campagnes', icon: Megaphone, module: 'campagnes' },
   { to: '/clients', label: 'Clients', icon: Users, module: 'clients' },
   { to: '/emplacements', label: 'Emplacements', icon: MapPin, module: 'emplacements' },
@@ -116,7 +123,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="px-5 py-3 border-t border-slate-700 text-xs text-slate-500">
-          v1.2 · Régie Publicitaire
+          v1.3 · Régie Publicitaire
         </div>
       </aside>
 
