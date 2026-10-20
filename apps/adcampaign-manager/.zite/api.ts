@@ -20,6 +20,7 @@ import type { default as _GetImpressionsEp } from '../src/api/getImpressions';
 import type { default as _GetReportsEp } from '../src/api/getReports';
 import type { default as _GetReservationsEp } from '../src/api/getReservations';
 import type { default as _GetSortiesEp } from '../src/api/getSorties';
+import type { default as _GetEntreesEp } from '../src/api/getEntrees';
 import type { default as _GetStockEp } from '../src/api/getStock';
 import type { default as _SaveCampagneEp } from '../src/api/saveCampagne';
 import type { default as _SaveClientEp } from '../src/api/saveClient';
@@ -29,6 +30,7 @@ import type { default as _SaveFactureEp } from '../src/api/saveFacture';
 import type { default as _SaveImpressionEp } from '../src/api/saveImpression';
 import type { default as _SaveReservationEp } from '../src/api/saveReservation';
 import type { default as _SaveSortieEp } from '../src/api/saveSortie';
+import type { default as _EntreeStockEp } from '../src/api/entreeStock';
 import type { default as _SaveStockEp } from '../src/api/saveStock';
 import type { default as _VoiceAgentEp } from '../src/api/voiceAgent';
 import type { default as _GetUtilisateursEp } from '../src/api/getUtilisateurs';
@@ -134,6 +136,11 @@ export type GetStockInputType = NonNullable<_GetStockCfg['inputSchema']> extends
 export type GetStockOutputType = Awaited<ReturnType<_GetStockCfg['execute']>>;
 export const getStock = createCaller<GetStockInputType, GetStockOutputType>('getStock');
 
+type _GetEntreesCfg = typeof _GetEntreesEp;
+export type GetEntreesInputType = NonNullable<_GetEntreesCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_GetEntreesCfg['execute']>[0]['input'];
+export type GetEntreesOutputType = Awaited<ReturnType<_GetEntreesCfg['execute']>>;
+export const getEntrees = createCaller<GetEntreesInputType, GetEntreesOutputType>('getEntrees');
+
 type _SaveCampagneCfg = typeof _SaveCampagneEp;
 export type SaveCampagneInputType = NonNullable<_SaveCampagneCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_SaveCampagneCfg['execute']>[0]['input'];
 export type SaveCampagneOutputType = Awaited<ReturnType<_SaveCampagneCfg['execute']>>;
@@ -174,6 +181,11 @@ export type SaveSortieInputType = NonNullable<_SaveSortieCfg['inputSchema']> ext
 export type SaveSortieOutputType = Awaited<ReturnType<_SaveSortieCfg['execute']>>;
 export const saveSortie = createCaller<SaveSortieInputType, SaveSortieOutputType>('saveSortie');
 
+type _EntreeStockCfg = typeof _EntreeStockEp;
+export type EntreeStockInputType = NonNullable<_EntreeStockCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_EntreeStockCfg['execute']>[0]['input'];
+export type EntreeStockOutputType = Awaited<ReturnType<_EntreeStockCfg['execute']>>;
+export const entreeStock = createCaller<EntreeStockInputType, EntreeStockOutputType>('entreeStock');
+
 type _SaveStockCfg = typeof _SaveStockEp;
 export type SaveStockInputType = NonNullable<_SaveStockCfg['inputSchema']> extends { _input: infer I } ? I : Parameters<_SaveStockCfg['execute']>[0]['input'];
 export type SaveStockOutputType = Awaited<ReturnType<_SaveStockCfg['execute']>>;
@@ -205,6 +217,7 @@ export const api = {
   getReservations,
   getSorties,
   getStock,
+  getEntrees,
   saveCampagne,
   saveClient,
   saveCollaborateur,
@@ -214,6 +227,7 @@ export const api = {
   saveReservation,
   saveSortie,
   saveStock,
+  entreeStock,
   voiceAgent,
 };
 

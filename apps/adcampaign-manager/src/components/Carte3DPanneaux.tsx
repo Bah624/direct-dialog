@@ -46,14 +46,6 @@ const STYLE: StyleSpecification = {
       maxzoom: 19,
       attribution: 'Imagerie &copy; Esri, Maxar, Earthstar Geographics',
     },
-    plan: {
-      type: 'vector',
-      tiles: ['https://tiles.versatiles.org/tiles/osm/{z}/{x}/{y}'],
-      minzoom: 0,
-      maxzoom: 14,
-      bounds: [-180, -90, 180, 90],
-      attribution: '&copy; OpenStreetMap contributors',
-    },
   },
   layers: [
     {
@@ -61,18 +53,6 @@ const STYLE: StyleSpecification = {
       type: 'raster',
       source: 'satellite',
       paint: { 'raster-brightness-max': 0.95, 'raster-saturation': -0.1 },
-    },
-    {
-      id: 'batiments',
-      type: 'fill-extrusion',
-      source: 'plan',
-      'source-layer': 'buildings',
-      minzoom: 13,
-      paint: {
-        'fill-extrusion-color': '#ffffff',
-        'fill-extrusion-height': 18,
-        'fill-extrusion-opacity': 0.62,
-      },
     },
   ],
 };

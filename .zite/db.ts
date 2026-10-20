@@ -388,6 +388,35 @@ export type SortiesDeStockRecordType = {
   dateEnregistrement?: string;
 };
 
+/** A record in the "Entrees de Stock" table, as it is read back. */
+export type EntreesDeStockRecordType = {
+  id: string;
+  /** Primary field. Read-only. "Référence Entrée" */
+  referenceEntree?: number;
+  /** Links to stock ("Stock"). Single record only. "Article" */
+  article?: string | string[];
+  quantiteEntree?: number;
+  fournisseur?: string;
+  motif?: "Achat fournisseur" | "Retour atelier" | "Inventaire / Ajustement" | "Don" | "Autre" | string;
+  /** "Date Entrée". Date-only field (YYYY-MM-DD string) */
+  dateEntree?: string;
+  responsable?: string;
+  notes?: string;
+  /** Read-only. "Date Enregistrement". */
+  dateEnregistrement?: string;
+};
+
+/** What you may write when creating or updating a record in the "Entrees de Stock" table. */
+export type EntreesDeStockRecordInput = {
+  article: string | string[] | null;
+  quantiteEntree: string | number | null;
+  fournisseur: string | null;
+  motif: string | null;
+  dateEntree: string | Date | null;
+  responsable: string | null;
+  notes: string | null;
+};
+
 /** What you may write when creating or updating a record in the "Sorties de Stock" table. */
 export type SortiesDeStockRecordInput = {
   article: string | string[] | null;
@@ -528,6 +557,7 @@ export const zite = {
   factures: createTableClient<FacturesRecordType, FacturesRecordInput>('Factures'), // "Factures"
   stock: createTableClient<StockRecordType, StockRecordInput>('Stock'), // "Stock"
   sortiesDeStock: createTableClient<SortiesDeStockRecordType, SortiesDeStockRecordInput>('SortiesDeStock'), // "Sorties de Stock"
+  entreesDeStock: createTableClient<EntreesDeStockRecordType, EntreesDeStockRecordInput>('EntreesDeStock'), // "Entrees de Stock"
   conversationsAgent: createTableClient<ConversationsAgentRecordType, ConversationsAgentRecordInput>('ConversationsAgent'), // "Conversations Agent"
   collaborateurs: createTableClient<CollaborateursRecordType, CollaborateursRecordInput>('Collaborateurs'), // "Collaborateurs"
   utilisateurs: createTableClient<UtilisateursRecordType, UtilisateursRecordInput>('Utilisateurs'), // "Utilisateurs"

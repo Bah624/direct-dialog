@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { getStock, saveStock, deleteStock, getSorties, saveSortie, GetStockOutputType, GetSortiesOutputType } from 'zitejs/api';
+import { getStock, saveStock, deleteStock, getSorties, saveSortie, getEntrees, entreeStock, GetStockOutputType, GetSortiesOutputType, GetEntreesOutputType } from 'zitejs/api';
 import { Button } from '@project/components/ui/button';
 import { Input } from '@project/components/ui/input';
 import { Card, CardContent } from '@project/components/ui/card';
@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@project/components/ui/select';
 import { Label } from '@project/components/ui/label';
 import { Textarea } from '@project/components/ui/textarea';
-import { Plus, Pencil, Trash2, Package, AlertTriangle, XCircle, Printer, TrendingUp, ArrowDownLeft, TrendingDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, AlertTriangle, XCircle, Printer, TrendingUp, ArrowDownLeft, ArrowUpRight, TrendingDown } from 'lucide-react';
 import { Skeleton } from '@project/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Toaster } from '@project/components/ui/sonner';
@@ -17,11 +17,13 @@ import { cn } from '@project/components/lib/utils';
 
 type Item = GetStockOutputType['items'][0];
 type Sortie = GetSortiesOutputType['sorties'][0];
+type Entree = GetEntreesOutputType['entrees'][0];
 
 const CATEGORIES = ['Vinyle', 'Encre', 'Papier grand format', 'Solvant & produits chimiques', 'Outillage', 'Profilé & structure', 'Visserie & fixation', 'Autre'];
 const UNITES = ['m²', 'ml (millilitre)', 'L (litre)', 'kg', 'Pièce', 'Rouleau', 'Boîte', 'Mètre linéaire'];
 const STATUTS = ['En stock', 'Stock faible', 'Rupture de stock', 'Commandé'];
 const MOTIFS = ['Utilisation travaux', 'Perte / Détérioration', 'Retour fournisseur', 'Inventaire / Ajustement', 'Autre'];
+const MOTIFS_ENTREE = ['Achat fournisseur', 'Retour atelier', 'Inventaire / Ajustement', 'Don', 'Autre'];
 
 const STATUT_STYLE: Record<string, string> = {
   'En stock': 'bg-green-100 text-green-700',
@@ -44,6 +46,7 @@ const fmtGNF = (n?: number) => n != null ? n.toLocaleString('fr-FR', { maximumFr
 
 const EMPTY_ITEM: Record<string, any> = { referenceArticle: '', statutStock: 'En stock' };
 const EMPTY_SORTIE: Record<string, any> = { dateSortie: new Date().toISOString().split('T')[0], motif: 'Utilisation travaux' };
+const EMPTY_ENTREE: Record<string, any> = { dateEntree: new Date().toISOString().split('T')[0], motif: 'Achat fournisseur' };
 
 function StatutBadge({ statut }: { statut?: string }) {
   if (!statut) return <span className="text-muted-foreground text-xs">—</span>;
@@ -58,6 +61,7 @@ function MotifBadge({ motif }: { motif?: string }) {
 export default function StockPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [sorties, setSorties] = useState<Sortie[]>([]);
+  const [entrees, setEntrees] = useState<Entree[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingSorties, setLoadingSorties] = useState(true);
   const [filterCat, setFilterCat] = useState('');
@@ -76,6 +80,11 @@ export default function StockPage() {
   const [sortieDialogOpen, setSortieDialogOpen] = useState(false);
   const [savingSortie, setSavingSortie] = useState(false);
 
+  // Entrée form
+  const [entreeForm, setEntreeForm] = useState<Record<string, any>>(EMPTY_ENTREE);
+  const [entreeDialogOpen, setEntreeDialogOpen] = useState(false);
+  const [savingEntree, setSavingEntree] = useState(false);
+
   const loadItems = async () => {
     const res = await getStock({ categorie: filterCat || undefined, statut: filterStatut || undefined });
     setItems(res.items);
@@ -90,7 +99,13 @@ export default function StockPage() {
   };
 
   useEffect(() => { loadItems(); }, [filterCat, filterStatut]);
+  const loadEntrees = async () => {
+    const res = await getEntrees({});
+    setEntrees(res.entrees);
+  };
+
   useEffect(() => { if (tab === 'sorties') loadSorties(); }, [tab]);
+  useEffect(() => { if (tab === 'entrees') loadEntrees(); }, [tab]);
 
   const filtered = items.filter(i =>
     !search || i.nomArticle?.toLowerCase().includes(search.toLowerCase()) || i.referenceArticle?.toLowerCase().includes(search.toLowerCase())
@@ -161,6 +176,38 @@ export default function StockPage() {
     } finally { setSavingSortie(false); }
   };
 
+  // Entrée handlers
+  const openNewEntree = (articleId?: string) => {
+    setEntreeForm({ ...EMPTY_ENTREE, articleId: articleId ?? '' });
+    setEntreeDialogOpen(true);
+  };
+
+  const setEntreeField = (k: string, v: any) => setEntreeForm(f => ({ ...f, [k]: v }));
+
+  const handleSaveEntree = async () => {
+    if (!entreeForm.articleId) return toast.error('Article requis');
+    if (!entreeForm.quantiteEntree || parseFloat(entreeForm.quantiteEntree) <= 0) return toast.error('Quantité invalide');
+    setSavingEntree(true);
+    try {
+      const res = await entreeStock({
+        articleId: entreeForm.articleId,
+        quantiteEntree: parseFloat(entreeForm.quantiteEntree),
+        fournisseur: entreeForm.fournisseur || undefined,
+        motif: entreeForm.motif || undefined,
+        dateEntree: entreeForm.dateEntree || undefined,
+        responsable: entreeForm.responsable || undefined,
+        notes: entreeForm.notes || undefined,
+      });
+      const art = items.find(i => i.id === entreeForm.articleId);
+      toast.success(`Entrée enregistrée — Nouveau stock : ${fmtQty(res.newQuantite, art?.unite)}`);
+      setEntreeDialogOpen(false);
+      loadItems();
+      if (tab === 'entrees') loadEntrees();
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Erreur lors de l’entrée');
+    } finally { setSavingEntree(false); }
+  };
+
   return (
     <div className="space-y-5">
       <Toaster />
@@ -202,6 +249,7 @@ export default function StockPage() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <TabsList>
             <TabsTrigger value="inventaire" className="gap-2"><Package className="w-3.5 h-3.5" />Inventaire</TabsTrigger>
+            <TabsTrigger value="entrees" className="gap-2"><ArrowUpRight className="w-3.5 h-3.5" />Entrées de stock</TabsTrigger>
             <TabsTrigger value="sorties" className="gap-2"><TrendingDown className="w-3.5 h-3.5" />Sorties de stock</TabsTrigger>
           </TabsList>
 
@@ -227,6 +275,12 @@ export default function StockPage() {
               </Button>
               <Button onClick={openNewItem} className="gap-2"><Plus className="w-4 h-4" />Nouvel article</Button>
             </div>
+          )}
+
+          {tab === 'entrees' && (
+            <Button onClick={() => openNewEntree()} className="gap-2">
+              <ArrowUpRight className="w-4 h-4" />Nouvelle entrée
+            </Button>
           )}
 
           {tab === 'sorties' && (
@@ -278,6 +332,13 @@ export default function StockPage() {
                             <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                               <Button
                                 variant="outline" size="sm"
+                                className="h-7 text-xs gap-1 border-emerald-500/40 text-emerald-700 hover:bg-emerald-50"
+                                onClick={() => openNewEntree(i.id)}
+                              >
+                                <ArrowUpRight className="w-3 h-3" />Entrée
+                              </Button>
+                              <Button
+                                variant="outline" size="sm"
                                 className="h-7 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
                                 onClick={() => openNewSortie(i.id)}
                               >
@@ -287,6 +348,53 @@ export default function StockPage() {
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(i.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
                             </div>
                           </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── ENTRÉES TAB ── */}
+        <TabsContent value="entrees" className="mt-4">
+          <Card>
+            <CardContent className="p-0">
+              {entrees.length === 0 ? (
+                <div className="flex flex-col items-center py-16 text-muted-foreground gap-2">
+                  <ArrowUpRight className="w-10 h-10 opacity-30" />
+                  <p className="text-sm">Aucune entrée enregistrée</p>
+                  <Button size="sm" variant="outline" onClick={() => openNewEntree()} className="gap-2 mt-2">
+                    <ArrowUpRight className="w-3.5 h-3.5" />Enregistrer une entrée
+                  </Button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-border bg-muted/40">
+                      <tr>
+                        {['N°', 'Article', 'Quantité entrée', 'Fournisseur', 'Motif', 'Date entrée', 'Responsable'].map(h => (
+                          <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {entrees.map(e => (
+                        <tr key={e.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-4 py-3 font-mono text-xs text-muted-foreground">#{e.referenceEntree ?? '—'}</td>
+                          <td className="px-4 py-3 font-medium">{e.articleNom || '—'}</td>
+                          <td className="px-4 py-3 font-semibold text-emerald-600">
+                            <span className="flex items-center gap-1">
+                              <ArrowUpRight className="w-3 h-3" />
+                              {fmtQty(e.quantiteEntree)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">{e.fournisseur || '—'}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{e.motif || '—'}</td>
+                          <td className="px-4 py-3">{fmtDate(e.dateEntree)}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{e.responsable || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -396,6 +504,67 @@ export default function StockPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setItemDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleSaveItem} disabled={savingItem}>{savingItem ? 'Enregistrement...' : 'Enregistrer'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Entrée form dialog ── */}
+      <Dialog open={entreeDialogOpen} onOpenChange={setEntreeDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowUpRight className="w-4 h-4 text-emerald-600" />
+              Enregistrer une entrée de stock
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Article *</Label>
+              <Select value={entreeForm.articleId ?? '_none'} onValueChange={v => setEntreeField('articleId', v === '_none' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Sélectionner un article" /></SelectTrigger>
+                <SelectContent>
+                  {items.map(i => (
+                    <SelectItem key={i.id} value={i.id}>
+                      {i.nomArticle || i.referenceArticle}
+                      {i.quantiteEnStock != null && (
+                        <span className="text-muted-foreground ml-1 text-xs">(stock: {fmtQty(i.quantiteEnStock, i.unite)})</span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Quantité entrée *</Label>
+                <Input type="number" min="0.01" step="0.01" placeholder="0" value={entreeForm.quantiteEntree ?? ''} onChange={e => setEntreeField('quantiteEntree', e.target.value)} />
+              </div>
+              <div>
+                <Label>Date d’entrée</Label>
+                <Input type="date" value={entreeForm.dateEntree ?? ''} onChange={e => setEntreeField('dateEntree', e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label>Fournisseur</Label>
+              <Input placeholder="Nom du fournisseur" value={entreeForm.fournisseur ?? ''} onChange={e => setEntreeField('fournisseur', e.target.value)} />
+            </div>
+            <div>
+              <Label>Motif</Label>
+              <Select value={entreeForm.motif ?? '_none'} onValueChange={v => setEntreeField('motif', v === '_none' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Motif d’entrée" /></SelectTrigger>
+                <SelectContent>{MOTIFS_ENTREE.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Responsable</Label>
+              <Input placeholder="Nom du responsable" value={entreeForm.responsable ?? ''} onChange={e => setEntreeField('responsable', e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEntreeDialogOpen(false)}>Annuler</Button>
+            <Button onClick={handleSaveEntree} disabled={savingEntree} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+              {savingEntree ? 'Enregistrement...' : 'Enregistrer l’entrée'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

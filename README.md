@@ -128,10 +128,27 @@ Le module « Emplacements » devient **Panneaux**. Chaque panneau peut porter se
 ![Carte des panneaux](docs/carte-3d.png)
 
 - **Vue Liste / Vue Carte 3D** dans le module Panneaux.
-- La carte 3D affiche le **satellite** et les **bâtiments en relief** (OpenStreetMap), avec un
-  bouton **Vue plan / Vue 3D** et un recentrage automatique sur la ville des panneaux.
+- La carte affiche l'**imagerie satellite** en vue inclinée, avec un bouton
+  **Vue plan / Vue 3D** et un recentrage automatique sur la ville des panneaux.
 - Chaque panneau est un **bandeau plat et net** : bordure fine à la couleur de disponibilité,
   nom, ville, tige et repère au sol — sans dégradé ni effet de relief.
+
+### Gestionnaire de stock (v2.3)
+
+![Entrées de stock](docs/stock-entrees.png)
+
+Le module **Gestion des Stocks** est un gestionnaire complet :
+
+- **Inventaire** : articles, catégorie, unité, quantité, seuil d'alerte, prix unitaire,
+  fournisseur, statut (En stock / Stock faible / Rupture / Commandé).
+- **Entrées de stock** : réapprovisionnement (article, quantité, fournisseur, motif, date,
+  responsable) — la quantité en stock est augmentée automatiquement et le dernier
+  approvisionnement mis à jour.
+- **Sorties de stock** : consommation (articles, motif, date, responsable) — la quantité est
+  diminuée et le statut recalculé.
+- **Journal** des entrées et des sorties, avec référence, article, quantité, motif, date et
+  responsable.
+- **Indicateurs** : total articles, stock faible, ruptures, valeur totale du stock.
 - Cliquer un marqueur ouvre la fiche du panneau (type, format, prix, coordonnées) avec un
   bouton **Itinéraire** vers Google Maps.
 - Une colonne **Coordonnées GPS** apparaît dans la liste, et un bouton localise le panneau

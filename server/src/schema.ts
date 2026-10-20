@@ -182,6 +182,23 @@ export const TABLES: Record<string, TableSchema> = {
       dateEnregistrement: "created_at", // Date Enregistrement
     },
   },
+  EntreesDeStock: {
+    className: "EntreesDeStock",
+    tableId: "tEntreesStock01",
+    name: "Entrees de Stock",
+    primaryField: "referenceEntree",
+    fields: {
+      referenceEntree: "autonumber", // Référence Entrée
+      article: "linked_record", // Article
+      quantiteEntree: "number", // Quantité Entrée
+      fournisseur: "single_line_text", // Fournisseur
+      motif: "single_select", // Motif
+      dateEntree: "date", // Date Entrée
+      responsable: "single_line_text", // Responsable
+      notes: "long_text", // Notes
+      dateEnregistrement: "created_at", // Date Enregistrement
+    },
+  },
   ConversationsAgent: {
     className: "ConversationsAgent",
     tableId: "tgSDdjGX9si",

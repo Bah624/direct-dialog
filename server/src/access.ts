@@ -44,6 +44,8 @@ export const ENDPOINT_ACCESS: Record<string, Regle> = {
 
   // Stock
   getStock: { module: 'stock', action: 'voir' },
+  getEntrees: { module: 'stock', action: 'voir' },
+  entreeStock: { module: 'stock', action: 'gerer' },
   saveStock: { module: 'stock', action: 'gerer' },
   deleteStock: { module: 'stock', action: 'gerer' },
   getSorties: { module: 'stock', action: 'voir' },
