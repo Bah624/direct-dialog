@@ -3,7 +3,7 @@
 **Application de gestion pour régie publicitaire** : campagnes, clients, emplacements,
 réservations, travaux & impressions, facturation, stock, collaborateurs, rapports et
 assistant vocal — avec **gestion des utilisateurs par profil**, **droits d'accès par module**
-et un **cockpit 3D** temps réel de votre réseau d'affichage.
+un **tableau de bord de pilotage** dense et un **cockpit 3D** temps réel de votre réseau d'affichage.
 
 [![CI](https://github.com/Bah624/direct-dialog/actions/workflows/ci.yml/badge.svg)](https://github.com/Bah624/direct-dialog/actions/workflows/ci.yml)
 [![Release](https://github.com/Bah624/direct-dialog/actions/workflows/release.yml/badge.svg)](https://github.com/Bah624/direct-dialog/actions/workflows/release.yml)
@@ -97,6 +97,26 @@ yarn build && yarn start     # http://localhost:8080
 
 > Docker et l'instance locale utilisent le même port 8080 : arrêter l'un avant de lancer
 > l'autre (`docker compose down` ou `pkill -f "server/dist/server.mjs"`).
+
+---
+
+## Tableau de bord de pilotage (v1.4)
+
+![Tableau de bord](docs/capture-tableau-de-bord.png)
+
+La page d'accueil reprend les codes d'un CRM professionnel : l'essentiel en un écran.
+
+| Bloc | Contenu |
+|---|---|
+| KPI | Encaissé, en attente de règlement, campagnes en cours, réservations à confirmer, panneaux disponibles |
+| Évolution | Courbe des encaissements sur 6 mois d'activité (encaissé vs en attente), ancrée sur les derniers mois facturés |
+| Relances & échéances | Factures en retard ou à échéance, réservations à confirmer, travaux planifiés, campagnes à valider — chaque ligne mène au module concerné |
+| Campagnes récentes | Pipeline avec client, statut, période, budget et barre d'avancement |
+| Meilleurs clients | Classement par montant facturé (repli automatique sur la répartition des campagnes quand aucune facture n'est rattachée) |
+| Dernières factures | Statut de paiement et échéance |
+
+Les montants s'adaptent à la devise configurée et les blocs financiers sont **masqués** pour
+les profils qui n'ont pas accès à la facturation.
 
 ---
 
@@ -275,6 +295,7 @@ ZITE_OPENAI_ACCESS_TOKEN=sk-... docker compose up -d
 | Changement de mot de passe | ancien refusé, nouveau accepté |
 | Déconnexion | session invalidée (`401` ensuite) |
 | Cockpit 3D | scène WebGL rendue, panneaux cliquables, cadrage + fiche détaillée |
+| Tableau de bord | 5 KPI, courbe 6 mois avec données, relances cliquables, pipeline et répartition |
 
 ---
 
