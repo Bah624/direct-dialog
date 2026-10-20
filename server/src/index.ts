@@ -265,7 +265,28 @@ app.post('/api/:name', async (req, res) => {
   }
 
   try {
-    const input = (req.body && req.body.inputs) ?? {};
+    let input = (req.body && req.body.inputs) ?? {};
+
+    // Le runtime Zite validait l'entrée via le schéma zod de l'endpoint.
+    // On reproduit ce comportement (valeurs par défaut incluses).
+    if (endpoint.inputSchema && typeof endpoint.inputSchema.parse === 'function') {
+      try {
+        input = endpoint.inputSchema.parse(input);
+      } catch (erreur: any) {
+        const details = Array.isArray(erreur?.issues)
+          ? erreur.issues
+              .map((i: any) => `${(i.path ?? []).join('.') || 'input'}: ${i.message}`)
+              .join('; ')
+          : 'Données invalides';
+        res.status(400).json({
+          message: `Données invalides — ${details}`,
+          code: 'BAD_REQUEST',
+          userFacingMessage: 'Certaines informations sont manquantes ou invalides.',
+        });
+        return;
+      }
+    }
+
     const result = await endpoint.execute({
       input,
       context: {
