@@ -1,31 +1,52 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  getCollaborateurs,
   getDashboard,
   getEmplacements,
   getImpressions,
   getReservations,
   getStock,
+  getUtilisateurs,
+  GetCollaborateursOutputType,
   GetDashboardOutputType,
   GetEmplacementsOutputType,
   GetImpressionsOutputType,
   GetStockOutputType,
+  GetUtilisateursOutputType,
 } from 'zitejs/api';
 import { Badge } from '@project/components/ui/badge';
 import { Button } from '@project/components/ui/button';
 import StatusBadge from '@/components/StatusBadge';
 import {
-  CalendarCheck, Crosshair, ExternalLink, Factory, Loader2, MapPin, Megaphone,
-  Network, Printer, RotateCw, TrendingUp, AlertTriangle, PackageX,
+  Building2, CalendarCheck, Crosshair, ExternalLink, Factory, Loader2, MapPin,
+  Megaphone, Network, PackageX, Printer, RotateCw, TrendingUp, AlertTriangle,
 } from 'lucide-react';
 import { creerScene, type Panneau, type SceneHandle } from '@/components/cockpit/scene';
 import { creerAtelier, ZONES_ATELIER, type AtelierHandle, type ZoneAtelier } from '@/components/cockpit/atelier';
+import { creerSiege, type Salle, type SiegeHandle, type StatutSalle } from '@/components/cockpit/siege';
 import { useSession } from '@/lib/session';
+import { initiales } from '@/lib/permissions';
 import { cn } from '@project/components/lib/utils';
 
 type Emplacement = GetEmplacementsOutputType['emplacements'][0];
 type Impression = GetImpressionsOutputType['impressions'][0];
 type Article = GetStockOutputType['items'][0];
+type Utilisateur = GetUtilisateursOutputType['utilisateurs'][0];
+type Collaborateur = GetCollaborateursOutputType['collaborateurs'][0];
+
+type Vue = 'siege' | 'reseau' | 'atelier';
+
+type Departement = {
+  id: string;
+  nom: string;
+  profils: string[];
+  module: string;
+  operations: number;
+  detail: string;
+  statut: StatutSalle;
+  responsables: Utilisateur[];
+};
 
 const DISPOS = ['Disponible', 'Réservé', 'Occupé', 'En maintenance'] as const;
 
@@ -70,12 +91,14 @@ export default function CockpitPage() {
   const devise = data?.societe?.devise ?? 'GNF';
 
   const conteneur = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<SceneHandle | AtelierHandle | null>(null);
+  const sceneRef = useRef<SceneHandle | AtelierHandle | SiegeHandle | null>(null);
 
-  const [vue, setVue] = useState<'reseau' | 'atelier'>('reseau');
+  const [vue, setVue] = useState<Vue>('siege');
   const [emplacements, setEmplacements] = useState<Emplacement[]>([]);
   const [impressions, setImpressions] = useState<Impression[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
+  const [utilisateurs, setUtilisateurs] = useState<Utilisateur[]>([]);
+  const [collaborateurs, setCollaborateurs] = useState<Collaborateur[]>([]);
   const [dashboard, setDashboard] = useState<GetDashboardOutputType | null>(null);
   const [reservationsEnAttente, setReservationsEnAttente] = useState(0);
   const [chargement, setChargement] = useState(true);
@@ -89,19 +112,22 @@ export default function CockpitPage() {
   useEffect(() => {
     let annule = false;
     (async () => {
-      const [emp, dash, resa, trav, stock] = await Promise.allSettled([
+      const [emp, dash, resa, trav, stock, users, collabs] = await Promise.allSettled([
         getEmplacements({}),
         getDashboard({}),
         getReservations({}),
         getImpressions({}),
         getStock({}),
+        getUtilisateurs({}),
+        getCollaborateurs({}),
       ]);
       if (annule) return;
 
       if (emp.status === 'fulfilled') {
         setEmplacements(((emp.value as any).emplacements ?? []) as Emplacement[]);
+      } else {
+        setIndisponible(true);
       }
-      else setIndisponible(true);
       if (dash.status === 'fulfilled') setDashboard(dash.value);
       if (resa.status === 'fulfilled') {
         setReservationsEnAttente(
@@ -114,6 +140,12 @@ export default function CockpitPage() {
       if (stock.status === 'fulfilled') {
         const donnees = stock.value as any;
         setArticles((donnees.items ?? donnees.stock ?? []) as Article[]);
+      }
+      if (users.status === 'fulfilled') {
+        setUtilisateurs(((users.value as any).utilisateurs ?? []) as Utilisateur[]);
+      }
+      if (collabs.status === 'fulfilled') {
+        setCollaborateurs(((collabs.value as any).collaborateurs ?? []) as Collaborateur[]);
       }
       setChargement(false);
     })();
@@ -174,7 +206,6 @@ export default function CockpitPage() {
     const statutDe = (liste: Impression[]): ZoneAtelier['statut'] => {
       if (liste.some((i) => i.statut === 'En cours')) return 'active';
       if (liste.some((i) => i.statut === 'Planifiée')) return 'attente';
-      if (liste.length > 0) return 'libre';
       return 'libre';
     };
 
@@ -192,6 +223,127 @@ export default function CockpitPage() {
     });
   }, [operationsParZone, articlesEnAlerte]);
 
+  // --- Données siège ---------------------------------------------------------
+  const departements = useMemo<Departement[]>(() => {
+    const echeances = dashboard?.echeances ?? [];
+    const nb = (type: string) => echeances.filter((e) => e.type === type).length;
+
+    const facturesRetard = dashboard?.facturesEnRetard ?? 0;
+    const campagnesAValider = nb('Campagne');
+    const travauxPlanifies = dashboard?.impressionsPlanifiees ?? 0;
+    const travauxEnCours = impressions.filter((i) => i.statut === 'En cours').length;
+    const alertesStock = articlesEnAlerte.length;
+
+    const responsablesPour = (profils: string[]) =>
+      utilisateurs.filter((u) => profils.includes(u.profil ?? ''));
+
+    const construire = (
+      id: string,
+      nom: string,
+      profils: string[],
+      module: string,
+      operations: number,
+      detail: string,
+      statut: StatutSalle,
+    ): Departement => ({
+      id,
+      nom,
+      profils,
+      module,
+      operations,
+      detail,
+      statut,
+      responsables: responsablesPour(profils),
+    });
+
+    return [
+      construire(
+        'accueil',
+        'Accueil',
+        ['Assistante de direction'],
+        '/campagnes',
+        campagnesAValider,
+        `${campagnesAValider} campagne(s) à valider`,
+        campagnesAValider > 0 ? 'attente' : 'libre',
+      ),
+      construire(
+        'operations',
+        'Opérations',
+        ['Responsable des opérations'],
+        '/reservations',
+        reservationsEnAttente + alertesStock,
+        `${reservationsEnAttente} réservation(s) · ${alertesStock} alerte(s) stock`,
+        reservationsEnAttente > 0 ? 'attente' : alertesStock > 0 ? 'alerte' : 'libre',
+      ),
+      construire(
+        'atelier',
+        'Atelier',
+        ["Chef d'atelier", 'Machiniste', 'Responsable technique'],
+        '/impressions',
+        travauxPlanifies + travauxEnCours,
+        `${travauxPlanifies} planifié(s) · ${travauxEnCours} en cours`,
+        travauxEnCours > 0 ? 'active' : travauxPlanifies > 0 ? 'attente' : 'libre',
+      ),
+      construire(
+        'comptabilite',
+        'Comptabilité',
+        ['Comptable'],
+        '/factures',
+        facturesRetard,
+        `${facturesRetard} facture(s) en retard`,
+        facturesRetard > 0 ? 'alerte' : 'libre',
+      ),
+      construire(
+        'studio',
+        'Studio graphique',
+        ['Graphiste'],
+        '/impressions',
+        travauxEnCours,
+        `${travauxEnCours} travaux en cours`,
+        travauxEnCours > 0 ? 'active' : 'libre',
+      ),
+      construire(
+        'rh',
+        'Ressources humaines',
+        ['RH'],
+        '/collaborateurs',
+        collaborateurs.length,
+        `${collaborateurs.length} collaborateur(s)`,
+        'libre',
+      ),
+      construire(
+        'commercial',
+        'Commercial',
+        ['Commercial'],
+        '/campagnes',
+        reservationsEnAttente,
+        `${reservationsEnAttente} réservation(s) à confirmer`,
+        reservationsEnAttente > 0 ? 'attente' : 'libre',
+      ),
+      construire(
+        'direction',
+        'Direction',
+        ['Directeur général', 'Administrateur'],
+        '/',
+        campagnesAValider + facturesRetard,
+        `${campagnesAValider} validation(s) · ${facturesRetard} retard(s)`,
+        campagnesAValider > 0 ? 'attente' : facturesRetard > 0 ? 'alerte' : 'libre',
+      ),
+    ];
+  }, [dashboard, impressions, reservationsEnAttente, articlesEnAlerte, utilisateurs, collaborateurs]);
+
+  const salles = useMemo<Salle[]>(
+    () =>
+      departements.map((d) => ({
+        id: d.id,
+        nom: d.nom,
+        operations: d.operations,
+        responsables: d.responsables.length,
+        statut: d.statut,
+      })),
+    [departements],
+  );
+
   // --- Scène 3D -------------------------------------------------------------
   useEffect(() => {
     if (!conteneur.current) return;
@@ -201,22 +353,27 @@ export default function CockpitPage() {
     }
 
     const handle =
-      vue === 'reseau'
-        ? creerScene(conteneur.current, panneaux, {
+      vue === 'siege'
+        ? creerSiege(conteneur.current, salles, {
             rotation: true,
             onSelect: (id) => setSelection(id),
           })
-        : creerAtelier(conteneur.current, zones, {
-            rotation: true,
-            onSelect: (id) => setSelection(id),
-          });
+        : vue === 'reseau'
+          ? creerScene(conteneur.current, panneaux, {
+              rotation: true,
+              onSelect: (id) => setSelection(id),
+            })
+          : creerAtelier(conteneur.current, zones, {
+              rotation: true,
+              onSelect: (id) => setSelection(id),
+            });
 
     sceneRef.current = handle;
     return () => {
       handle.dispose();
       sceneRef.current = null;
     };
-  }, [vue, panneaux, zones]);
+  }, [vue, salles, panneaux, zones]);
 
   useEffect(() => {
     sceneRef.current?.setRotation(rotation);
@@ -241,6 +398,7 @@ export default function CockpitPage() {
 
   const emplacementSelectionne = emplacements.find((e) => e.id === selection) ?? null;
   const zoneSelectionnee = vue === 'atelier' ? zones.find((z) => z.id === selection) ?? null : null;
+  const departementSelectionne = vue === 'siege' ? departements.find((d) => d.id === selection) ?? null : null;
   const operationsSelectionnees = selection ? operationsParZone[selection] ?? [] : [];
 
   const stats = [
@@ -269,6 +427,13 @@ export default function CockpitPage() {
       teinte: 'text-violet-400',
     },
   ];
+
+  const sousTitre =
+    vue === 'siege'
+      ? `Siège · ${departements.length} bureaux · ${utilisateurs.length} responsable(s)`
+      : vue === 'reseau'
+        ? `Réseau d'affichage · ${emplacements.length} emplacement(s)`
+        : `Atelier de production · ${impressions.length} opération(s)`;
 
   const compte = (dispo: string) => emplacements.filter((e) => e.disponibilite === dispo).length;
 
@@ -307,11 +472,7 @@ export default function CockpitPage() {
         <div>
           <p className="text-[11px] uppercase tracking-[0.2em] text-sky-400/80">Direct Dialog</p>
           <h1 className="text-xl md:text-2xl font-semibold leading-tight">Cockpit 3D</h1>
-          <p className="text-xs text-slate-400">
-            {vue === 'reseau'
-              ? `Réseau d’affichage · ${emplacements.length} emplacement(s)`
-              : `Atelier de production · ${impressions.length} opération(s)`}
-          </p>
+          <p className="text-xs text-slate-400">{sousTitre}</p>
         </div>
       </div>
 
@@ -363,73 +524,92 @@ export default function CockpitPage() {
         <div className="rounded-xl border border-white/10 bg-slate-900/70 backdrop-blur-md overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <p className="text-sm font-medium">
-              {vue === 'reseau' ? 'Emplacements' : 'Postes de l’atelier'}
+              {vue === 'siege'
+                ? 'Bureaux'
+                : vue === 'reseau'
+                  ? 'Emplacements'
+                  : 'Postes de l’atelier'}
             </p>
             <span className="text-[11px] text-slate-400">
-              {vue === 'reseau' ? emplacements.length : zones.length}
+              {vue === 'siege' ? departements.length : vue === 'reseau' ? emplacements.length : zones.length}
             </span>
           </div>
 
-          {vue === 'reseau' ? (
-            <>
-              <div className="flex flex-wrap gap-1 px-3 py-2 border-b border-white/10">
+          {vue === 'reseau' && (
+            <div className="flex flex-wrap gap-1 px-3 py-2 border-b border-white/10">
+              <button
+                onClick={() => setFiltre(null)}
+                className={cn(
+                  'text-[11px] rounded-full px-2 py-1 transition',
+                  !filtre ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10',
+                )}
+              >
+                Tous
+              </button>
+              {DISPOS.map((d) => (
                 <button
-                  onClick={() => setFiltre(null)}
+                  key={d}
+                  onClick={() => setFiltre(filtre === d ? null : d)}
                   className={cn(
                     'text-[11px] rounded-full px-2 py-1 transition',
-                    !filtre ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10',
+                    filtre === d ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10',
                   )}
                 >
-                  Tous
+                  {d}
                 </button>
-                {DISPOS.map((d) => (
+              ))}
+            </div>
+          )}
+
+          <div className="max-h-[24rem] overflow-y-auto">
+            {vue === 'siege' &&
+              departements.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => choisir(d.id)}
+                  className={cn(
+                    'w-full text-left px-4 py-2 flex items-center gap-3 transition hover:bg-white/5',
+                    selection === d.id && 'bg-white/10',
+                  )}
+                >
+                  <span className={cn('w-2 h-2 rounded-full flex-shrink-0', COULEUR_ZONE[d.statut])} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-medium truncate">{d.nom}</span>
+                    <span className="block text-[11px] text-slate-400 truncate">
+                      {d.responsables.length} responsable(s)
+                    </span>
+                  </span>
+                  <span className="text-[11px] text-slate-400 tabular-nums">{d.operations}</span>
+                </button>
+              ))}
+
+            {vue === 'reseau' &&
+              emplacements
+                .filter((e) => !filtre || e.disponibilite === filtre)
+                .map((e) => (
                   <button
-                    key={d}
-                    onClick={() => setFiltre(filtre === d ? null : d)}
+                    key={e.id}
+                    onClick={() => choisir(e.id)}
                     className={cn(
-                      'text-[11px] rounded-full px-2 py-1 transition',
-                      filtre === d ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10',
+                      'w-full text-left px-4 py-2.5 flex items-center gap-3 transition hover:bg-white/5',
+                      selection === e.id && 'bg-white/10',
                     )}
                   >
-                    {d}
+                    <span className={cn('w-2 h-2 rounded-full flex-shrink-0', COULEUR_DISPO[e.disponibilite ?? ''] ?? 'bg-sky-400')} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs font-medium truncate">{e.referenceEmplacement}</span>
+                      <span className="block text-[11px] text-slate-400 truncate">
+                        {e.ville} · {e.type}
+                      </span>
+                    </span>
+                    <span className="text-[11px] text-slate-400 tabular-nums">
+                      {(e.prixParSemaine ?? 0).toLocaleString('fr-FR')}
+                    </span>
                   </button>
                 ))}
-              </div>
 
-              <div className="max-h-64 overflow-y-auto">
-                {emplacements
-                  .filter((e) => !filtre || e.disponibilite === filtre)
-                  .map((e) => (
-                    <button
-                      key={e.id}
-                      onClick={() => choisir(e.id)}
-                      className={cn(
-                        'w-full text-left px-4 py-2.5 flex items-center gap-3 transition hover:bg-white/5',
-                        selection === e.id && 'bg-white/10',
-                      )}
-                    >
-                      <span className={cn('w-2 h-2 rounded-full flex-shrink-0', COULEUR_DISPO[e.disponibilite ?? ''] ?? 'bg-sky-400')} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-xs font-medium truncate">{e.referenceEmplacement}</span>
-                        <span className="block text-[11px] text-slate-400 truncate">
-                          {e.ville} · {e.type}
-                        </span>
-                      </span>
-                      <span className="text-[11px] text-slate-400 tabular-nums">
-                        {(e.prixParSemaine ?? 0).toLocaleString('fr-FR')}
-                      </span>
-                    </button>
-                  ))}
-                {emplacements.length === 0 && (
-                  <p className="px-4 py-6 text-xs text-slate-400 text-center">
-                    Aucun emplacement enregistré.
-                  </p>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="max-h-64 overflow-y-auto">
-              {zones.map((z) => (
+            {vue === 'atelier' &&
+              zones.map((z) => (
                 <button
                   key={z.id}
                   onClick={() => choisir(z.id)}
@@ -440,14 +620,57 @@ export default function CockpitPage() {
                 >
                   <span className={cn('w-2 h-2 rounded-full flex-shrink-0', COULEUR_ZONE[z.statut])} />
                   <span className="min-w-0 flex-1 text-xs font-medium truncate">{z.nom}</span>
-                  <span className="text-[11px] text-slate-400 tabular-nums">
-                    {z.operations}
-                  </span>
+                  <span className="text-[11px] text-slate-400 tabular-nums">{z.operations}</span>
                 </button>
               ))}
-            </div>
-          )}
+          </div>
         </div>
+
+        {/* Détail siège */}
+        {vue === 'siege' && departementSelectionne && (
+          <div className="rounded-xl border border-white/10 bg-slate-900/80 backdrop-blur-md p-4 space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold">{departementSelectionne.nom}</p>
+                <p className="text-[11px] text-slate-400">{departementSelectionne.detail}</p>
+              </div>
+              <span className={cn('mt-1 w-2.5 h-2.5 rounded-full', COULEUR_ZONE[departementSelectionne.statut])} />
+            </div>
+
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1.5">Responsables</p>
+              {departementSelectionne.responsables.length > 0 ? (
+                <ul className="space-y-1.5">
+                  {departementSelectionne.responsables.map((r) => (
+                    <li key={r.id} className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-semibold">
+                        {initiales(r.nomComplet ?? '')}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[11px] font-medium truncate">{r.nomComplet}</span>
+                        <span className="block text-[10px] text-slate-400 truncate">{r.profil}</span>
+                      </span>
+                      <span
+                        className={cn(
+                          'w-1.5 h-1.5 rounded-full',
+                          r.statut === 'Inactif' ? 'bg-slate-500' : 'bg-emerald-400',
+                        )}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-[11px] text-slate-400">Aucun responsable enregistré.</p>
+              )}
+            </div>
+
+            <Button asChild size="sm" className="w-full gap-2">
+              <Link to={departementSelectionne.module}>
+                Ouvrir le module <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
+            </Button>
+          </div>
+        )}
 
         {/* Détail réseau */}
         {vue === 'reseau' && emplacementSelectionne && (
@@ -558,13 +781,13 @@ export default function CockpitPage() {
               <span className="w-2 h-2 rounded-full bg-orange-500" /> En cours
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-400" /> Planifié
+              <span className="w-2 h-2 rounded-full bg-amber-400" /> En attente
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-red-500" /> Alerte
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-sky-400" /> Libre
+              <span className="w-2 h-2 rounded-full bg-sky-400" /> Calme
             </span>
           </>
         )}
@@ -572,29 +795,32 @@ export default function CockpitPage() {
 
       {/* Sélecteur de vue */}
       <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-xl border border-white/10 bg-slate-900/80 p-1 backdrop-blur-md">
-        <button
-          onClick={() => setVue('reseau')}
-          className={cn(
-            'flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition',
-            vue === 'reseau' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5',
-          )}
-        >
-          <Network className="w-4 h-4" /> Réseau
-        </button>
-        <button
-          onClick={() => setVue('atelier')}
-          className={cn(
-            'flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition',
-            vue === 'atelier' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5',
-          )}
-        >
-          <Factory className="w-4 h-4" /> Atelier
-        </button>
+        {([
+          { cle: 'siege', libelle: 'Siège', icone: Building2 },
+          { cle: 'reseau', libelle: 'Réseau', icone: Network },
+          { cle: 'atelier', libelle: 'Atelier', icone: Factory },
+        ] as const).map(({ cle, libelle, icone: Icone }) => (
+          <button
+            key={cle}
+            onClick={() => setVue(cle)}
+            className={cn(
+              'flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition',
+              vue === cle ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5',
+            )}
+          >
+            <Icone className="w-4 h-4" /> {libelle}
+          </button>
+        ))}
       </div>
 
       {/* Aide navigation */}
       <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 hidden sm:flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 backdrop-blur text-[11px] text-slate-400">
-        {vue === 'reseau' ? (
+        {vue === 'siege' ? (
+          <>
+            <Building2 className="w-3.5 h-3.5" />
+            Cliquer un bureau pour voir ses responsables
+          </>
+        ) : vue === 'reseau' ? (
           <>
             <MapPin className="w-3.5 h-3.5" />
             Glisser pour pivoter · cliquer un panneau

@@ -187,6 +187,32 @@ En maintenance).
 | HUD | Chiffre d'affaires, campagnes en cours, réservations en attente, travaux planifiés, horloge |
 | Robustesse | Three.js chargé à la demande ; repli sur un message clair si WebGL est indisponible |
 
+### Siège 3D (v1.6)
+
+![Siège 3D](docs/siege-3d.png)
+
+La vue par défaut du cockpit est le **siège de l'entreprise** : huit bureaux disposés autour
+d'un hall central, chacun avec ses postes de travail, ses occupants et son étiquette
+flottante (nom, nombre de responsables, opérations à traiter).
+
+| Bureau | Responsables rattachés | Ce qui remonte |
+|---|---|---|
+| Accueil | Assistante de direction | Campagnes à valider |
+| Direction | Directeur général, Administrateur | Validations et retards |
+| Comptabilité | Comptable | Factures en retard |
+| Ressources humaines | RH | Effectif collaborateurs |
+| Commercial | Commercial | Réservations à confirmer |
+| Studio graphique | Graphiste | Travaux en cours |
+| Atelier | Chef d'atelier, Machiniste, Responsable technique | Travaux planifiés / en cours |
+| Opérations | Responsable des opérations | Réservations + alertes stock |
+
+Le code couleur est celui du logiciel : **rouge** = alerte (facture en retard, stock sous
+seuil), **orange** = activité en cours, **jaune** = en attente, **bleu** = calme.
+
+Cliquer un bureau (dans la scène ou dans la liste) recadre la caméra et ouvre sa fiche :
+nom des responsables avec leur profil et leur statut, détail des opérations, et bouton
+**Ouvrir le module** vers l'écran concerné.
+
 ### Vue Atelier (v1.5)
 
 ![Atelier 3D](docs/cockpit-atelier.png)
@@ -316,6 +342,7 @@ ZITE_OPENAI_ACCESS_TOKEN=sk-... docker compose up -d
 | Déconnexion | session invalidée (`401` ensuite) |
 | Cockpit 3D | scène WebGL rendue, panneaux cliquables, cadrage + fiche détaillée |
 | Vue Atelier | maquette 3D, 6 postes cliquables, opérations et alertes stock posées dessus |
+| Siège 3D | 8 bureaux, responsables rattachés par profil, navigation vers les modules |
 | Tableau de bord | 5 KPI, courbe 6 mois avec données, relances cliquables, pipeline et répartition |
 
 ---
