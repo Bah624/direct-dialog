@@ -24,6 +24,16 @@ import {
   verifierMotDePasse,
 } from './auth';
 import { avecUtilisateur, utilisateurCourant } from './requete';
+import { can } from './permissions';
+import { createEmailSender } from './email';
+import {
+  DEFAULT_CANAUX,
+  MESSAGE_TEST,
+  envoyerSurCanaux,
+  normaliserCanaux,
+  type Canaux,
+} from './notifications';
+import { analyserPanneaux, demarrerPlanificateur, envoyerAlertesPanneaux } from './alertes';
 
 const { store, dataDir } = await bootstrap();
 
@@ -243,6 +253,67 @@ app.get('/api/export', async (_req, res) => {
 // ---------------------------------------------------------------------------
 // Exécution des endpoints de l'application
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Notifications : configuration, test, envoi manuel des alertes panneaux.
+// ---------------------------------------------------------------------------
+const archiveEmail = createEmailSender(dataDir);
+
+async function exigerGestionParametres(res: express.Response): Promise<boolean> {
+  const utilisateur = utilisateurCourant();
+  if (!utilisateur) {
+    res.status(401).json({ message: 'Non authentifié' });
+    return false;
+  }
+  if (utilisateur.profil === 'Administrateur') return true;
+  const permissions = await settings.permissions();
+  if (!can(permissions, utilisateur.profil, 'parametres', 'gerer')) {
+    res.status(403).json({ message: 'Accès refusé' });
+    return false;
+  }
+  return true;
+}
+
+app.get('/api/notifications', async (_req, res) => {
+  const config = normaliserCanaux(await settings.get<Canaux>('notifications', DEFAULT_CANAUX));
+  const { records } = await store.findAll('Emplacements', { limit: 1000 });
+  const alertes = analyserPanneaux(records, config.alerteJours);
+  const historique = await settings.get<any[]>('notificationsHistorique', []);
+  const dernierEnvoi = await settings.get<string>('notificationsDernierEnvoi', '');
+  res.json({ config, alertes, historique, dernierEnvoi });
+});
+
+app.put('/api/notifications', async (req, res) => {
+  if (!(await exigerGestionParametres(res))) return;
+  const config = normaliserCanaux(req.body ?? {});
+  await settings.set('notifications', config);
+  res.json({ config });
+});
+
+app.post('/api/notifications/test', async (req, res) => {
+  if (!(await exigerGestionParametres(res))) return;
+  const config = normaliserCanaux(await settings.get<Canaux>('notifications', DEFAULT_CANAUX));
+  const canal = String(req.body?.canal ?? '');
+  const cible: Canaux = {
+    ...config,
+    email: { ...config.email, actif: canal === 'email' },
+    telegram: { ...config.telegram, actif: canal === 'telegram' },
+    whatsapp: { ...config.whatsapp, actif: canal === 'whatsapp' },
+  };
+  const resultats = await envoyerSurCanaux(cible, 'DIRECT DIALOG — test', MESSAGE_TEST, archiveEmail);
+  res.json({ resultats });
+});
+
+app.post('/api/notifications/envoyer', async (_req, res) => {
+  if (!(await exigerGestionParametres(res))) return;
+  const resultat = await envoyerAlertesPanneaux({
+    store,
+    settings,
+    archiveEmail,
+    forcer: true,
+  });
+  res.json(resultat);
+});
+
 app.post('/api/:name', async (req, res) => {
   const name = req.params.name;
   const endpoint = endpoints[name];
@@ -338,6 +409,8 @@ if (fs.existsSync(path.join(PUBLIC_DIR, 'index.html'))) {
       );
   });
 }
+
+demarrerPlanificateur({ store, settings, archiveEmail });
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[direct-dialog] serveur local prêt sur http://localhost:${PORT}`);

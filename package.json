@@ -18,7 +18,11 @@
     "typecheck:zite": "zitejs check"
   },
   "dependencies": {
+    "nodemailer": "^10.1.7",
     "zitejs": "0.9.136"
   },
-  "version": "2.0.0"
+  "version": "2.1.0",
+  "devDependencies": {
+    "@types/nodemailer": "^8.0.2"
+  }
 }

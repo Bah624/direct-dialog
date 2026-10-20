@@ -15,6 +15,9 @@ export default createEndpoint({
     disponibilite: z.string().optional(),
     latitude: z.number().optional(),
     longitude: z.number().optional(),
+    quartier: z.string().optional(),
+    disponibleDu: z.string().optional(),
+    disponibleAu: z.string().optional(),
   }),
   outputSchema: z.object({ id: z.string(), success: z.boolean() }),
   execute: async ({ input }) => {

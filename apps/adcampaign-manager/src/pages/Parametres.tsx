@@ -25,13 +25,14 @@ import {
 import { Badge } from '@project/components/ui/badge';
 import { Skeleton } from '@project/components/ui/skeleton';
 import {
-  Building2, Check, Download, Info, KeyRound, Pencil, RefreshCw, Save, Search,
+  Bell, Building2, Check, Download, Info, KeyRound, Pencil, RefreshCw, Save, Search,
   ShieldCheck, Trash2, UserPlus, Users, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Toaster } from '@project/components/ui/sonner';
 import { useSession } from '@/lib/session';
 import { MODULE_LABELS, MODULE_DESCRIPTIONS, initiales } from '@/lib/permissions';
+import ParametresNotifications from '@/components/ParametresNotifications';
 
 type Utilisateur = GetUtilisateursOutputType['utilisateurs'][0];
 type Permissions = Record<string, Record<string, { voir: boolean; gerer: boolean }>>;
@@ -50,6 +51,7 @@ const ONGLETS = [
   { cle: 'general', libelle: 'Général', icone: Building2 },
   { cle: 'utilisateurs', libelle: 'Utilisateurs', icone: Users },
   { cle: 'roles', libelle: 'Rôles & accès', icone: ShieldCheck },
+  { cle: 'notifications', libelle: 'Notifications', icone: Bell },
   { cle: 'compte', libelle: 'Mon compte', icone: KeyRound },
   { cle: 'systeme', libelle: 'Système', icone: Info },
 ] as const;
@@ -116,6 +118,7 @@ export default function ParametresPage() {
       {onglet === 'general' && <OngletGeneral />}
       {onglet === 'utilisateurs' && <OngletUtilisateurs />}
       {onglet === 'roles' && <OngletRoles />}
+      {onglet === 'notifications' && <ParametresNotifications />}
       {onglet === 'compte' && <OngletCompte />}
       {onglet === 'systeme' && <OngletSysteme onRafraichir={rafraichir} />}
 
@@ -678,7 +681,7 @@ function OngletSysteme({ onRafraichir }: { onRafraichir: () => Promise<void> }) 
           <CardDescription>Informations techniques de l’installation.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <Ligne libelle="Version" valeur="2.0.0" />
+          <Ligne libelle="Version" valeur="2.1.0" />
           <Ligne libelle="Société" valeur={data?.societe?.nom ?? '—'} />
           <Ligne libelle="Devise" valeur={data?.societe?.devise ?? '—'} />
           <Ligne libelle="TVA par défaut" valeur={`${data?.societe?.tauxTva ?? 0} %`} />

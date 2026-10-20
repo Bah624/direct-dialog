@@ -17,6 +17,9 @@ export default createEndpoint({
       disponibilite: z.string().optional(),
       latitude: z.number().optional(),
       longitude: z.number().optional(),
+      quartier: z.string().optional(),
+      disponibleDu: z.string().optional(),
+      disponibleAu: z.string().optional(),
     })),
   }),
   execute: async ({ input }) => {
@@ -43,6 +46,9 @@ export default createEndpoint({
         disponibilite: e.disponibilite,
         latitude: e.latitude,
         longitude: e.longitude,
+        quartier: e.quartier,
+        disponibleDu: e.disponibleDu,
+        disponibleAu: e.disponibleAu,
       })),
     };
   },

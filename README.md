@@ -147,6 +147,43 @@ panneau.
 Le fond de carte est **OpenStreetMap** : il nécessite une connexion Internet. Sans réseau,
 les marqueurs restent affichés sur un fond neutre.
 
+## Fiche panneau et alertes de disponibilité (v2.1)
+
+![Fiche panneau](docs/panneau-fiche.png)
+
+Cliquer un panneau **sur la carte 3D ou dans la liste** ouvre sa fiche complète :
+
+- **quartier**, ville, localisation précise ;
+- type, format, prix par semaine, coordonnées GPS ;
+- **période de disponibilité** (du → au) avec le nombre de jours restants, en vert, ambre
+  ou rouge selon l'échéance ;
+- bouton **Itinéraire** (Google Maps).
+
+Les dates se renseignent dans le formulaire du panneau (*Disponible du / Disponible au*),
+avec le quartier.
+
+### Notifications e-mail, Telegram et WhatsApp
+
+![Notifications](docs/notifications.png)
+
+*Paramètres → Notifications* permet de configurer :
+
+| Canal | Réglages |
+|---|---|
+| **E-mail** | destinataires, serveur SMTP, port, utilisateur, mot de passe, expéditeur |
+| **Telegram** | jeton du bot, chat ID |
+| **WhatsApp** | jeton Meta Cloud API, identifiant du numéro, destinataire |
+
+Chaque jour à **l'heure choisie**, le serveur envoie un récapitulatif des panneaux dont la
+période se termine dans les **N jours** (seuil réglable) ou vient de se terminer. Le message
+précise pour chaque panneau : référence, quartier, ville, localisation, **du → au**, et
+l'échéance (« se termine dans 3 jours », « terminée depuis 2 jours »).
+
+- Boutons **Tester** par canal et **Envoyer le récapitulatif maintenant**.
+- **Historique** des 30 derniers envois et date du dernier envoi.
+- Un seul envoi automatique par jour ; sans SMTP renseigné, l'e-mail est archivé localement
+  dans `data/outbox.jsonl`.
+
 ## Paramètres, utilisateurs et rôles (v1.1)
 
 Un module **Paramètres** est accessible depuis la barre latérale, avec quatre onglets :

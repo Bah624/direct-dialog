@@ -27,6 +27,29 @@ const EMPTY: Record<string, any> = {
 const fmtCurrency = (n?: number) =>
   n != null ? n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }) : '—';
 
+const dateFr = (valeur?: string) => {
+  if (!valeur) return null;
+  const [annee, mois, jour] = valeur.split('-');
+  return jour && mois && annee ? `${jour}/${mois}/${annee}` : valeur;
+};
+
+function periodePanneau(e: { disponibleDu?: string; disponibleAu?: string }) {
+  const du = dateFr(e.disponibleDu);
+  const au = dateFr(e.disponibleAu);
+  if (!du && !au) return { texte: 'Non renseignée', ton: 'text-muted-foreground', jours: null as number | null };
+  if (du && au) {
+    const fin = new Date(`${e.disponibleAu}T00:00:00`);
+    const aujourd = new Date();
+    aujourd.setHours(0, 0, 0, 0);
+    const jours = Math.round((fin.getTime() - aujourd.getTime()) / 86_400_000);
+    if (jours < 0) return { texte: `${du} → ${au} · terminée`, ton: 'text-red-600', jours };
+    if (jours === 0) return { texte: `${du} → ${au} · se termine aujourd'hui`, ton: 'text-amber-600', jours };
+    if (jours <= 7) return { texte: `${du} → ${au} · ${jours} j restants`, ton: 'text-amber-600', jours };
+    return { texte: `${du} → ${au} · ${jours} j restants`, ton: 'text-emerald-600', jours };
+  }
+  return { texte: du ? `À partir du ${du}` : `Jusqu'au ${au}`, ton: 'text-muted-foreground', jours: null };
+}
+
 const coordonnees = (e: { latitude?: number; longitude?: number }) =>
   e.latitude != null && e.longitude != null
     ? `${e.latitude.toFixed(5)}, ${e.longitude.toFixed(5)}`
@@ -83,6 +106,9 @@ export default function PanneauxPage() {
         prixParSemaine: form.prixParSemaine ? parseFloat(form.prixParSemaine) : undefined,
         latitude,
         longitude,
+        quartier: form.quartier || undefined,
+        disponibleDu: form.disponibleDu || undefined,
+        disponibleAu: form.disponibleAu || undefined,
       } as any);
       toast.success(form.id ? 'Panneau mis à jour' : 'Panneau créé');
       setDialogOpen(false);
@@ -224,10 +250,21 @@ export default function PanneauxPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <Info libelle="Quartier" valeur={panneauSelectionne.quartier || '—'} />
+                    <Info libelle="Ville" valeur={panneauSelectionne.ville || '—'} />
                     <Info libelle="Type" valeur={panneauSelectionne.type ?? '—'} />
                     <Info libelle="Format" valeur={panneauSelectionne.format ?? '—'} />
                     <Info libelle="Prix / semaine" valeur={fmtCurrency(panneauSelectionne.prixParSemaine)} />
                     <Info libelle="Coordonnées" valeur={coordonnees(panneauSelectionne)} />
+                  </div>
+
+                  <div className="rounded-md bg-muted/60 px-2.5 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Période de disponibilité
+                    </p>
+                    <p className={cn('text-xs font-medium', periodePanneau(panneauSelectionne).ton)}>
+                      {periodePanneau(panneauSelectionne).texte}
+                    </p>
                   </div>
 
                   <div className="flex gap-2">
@@ -284,12 +321,14 @@ export default function PanneauxPage() {
                     <tr>
                       {[
                         'Référence',
+                        'Quartier',
                         'Localisation',
                         'Ville',
                         'Type',
                         'Format',
                         'Prix/semaine',
                         'Coordonnées GPS',
+                        'Période',
                         'Disponibilité',
                         '',
                       ].map((h) => (
@@ -306,6 +345,7 @@ export default function PanneauxPage() {
                     {emplacements.map((e) => (
                       <tr key={e.id} className="hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-3 font-medium">{e.referenceEmplacement}</td>
+                        <td className="px-4 py-3">{e.quartier || '—'}</td>
                         <td className="px-4 py-3 text-muted-foreground">{e.localisation || '—'}</td>
                         <td className="px-4 py-3">{e.ville || '—'}</td>
                         <td className="px-4 py-3 text-muted-foreground">{e.type || '—'}</td>
@@ -313,6 +353,9 @@ export default function PanneauxPage() {
                         <td className="px-4 py-3 font-medium">{fmtCurrency(e.prixParSemaine)}</td>
                         <td className="px-4 py-3 text-muted-foreground tabular-nums text-xs">
                           {coordonnees(e)}
+                        </td>
+                        <td className={cn('px-4 py-3 text-xs', periodePanneau(e).ton)}>
+                          {periodePanneau(e).texte}
                         </td>
                         <td className="px-4 py-3">
                           <StatusBadge status={e.disponibilite} />
@@ -382,6 +425,30 @@ export default function PanneauxPage() {
                 value={form.localisation ?? ''}
                 onChange={(e) => set('localisation', e.target.value)}
                 placeholder="Ex : Carrefour Bambeto, face à la station"
+              />
+            </div>
+            <div>
+              <Label>Quartier</Label>
+              <Input
+                value={form.quartier ?? ''}
+                onChange={(e) => set('quartier', e.target.value)}
+                placeholder="Ex : Kaloum, Matam, Ratoma"
+              />
+            </div>
+            <div>
+              <Label>Disponible du</Label>
+              <Input
+                type="date"
+                value={form.disponibleDu ?? ''}
+                onChange={(e) => set('disponibleDu', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Disponible au</Label>
+              <Input
+                type="date"
+                value={form.disponibleAu ?? ''}
+                onChange={(e) => set('disponibleAu', e.target.value)}
               />
             </div>
             <div>

@@ -141,6 +141,12 @@ export type EmplacementsRecordType = {
   latitude?: number;
   /** Longitude GPS (degrés décimaux) */
   longitude?: number;
+  /** Quartier */
+  quartier?: string;
+  /** Début de la période de disponibilité (YYYY-MM-DD) */
+  disponibleDu?: string;
+  /** Fin de la période de disponibilité (YYYY-MM-DD) */
+  disponibleAu?: string;
   photo?: ZiteAttachment[];
   /** Links to reservations ("Réservations"). Single record only. "Réservations" */
   reservations?: string | string[];
@@ -157,6 +163,9 @@ export type EmplacementsRecordInput = {
   disponibilite: "Disponible" | "Réservé" | "Occupé" | "En maintenance" | string | null;
   latitude: number | null;
   longitude: number | null;
+  quartier: string | null;
+  disponibleDu: string | null;
+  disponibleAu: string | null;
   photo: ZiteAttachmentInput[] | ZiteAttachmentInput | null;
   reservations: string | string[] | null;
 };

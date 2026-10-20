@@ -59,6 +59,9 @@ export const TABLES: Record<string, TableSchema> = {
       disponibilite: "single_select", // Disponibilité
       latitude: "number", // Latitude GPS
       longitude: "number", // Longitude GPS
+      quartier: "single_line_text", // Quartier
+      disponibleDu: "date", // Disponible du
+      disponibleAu: "date", // Disponible au
       photo: "attachments", // Photo
       reservations: "linked_record", // Réservations
     },
