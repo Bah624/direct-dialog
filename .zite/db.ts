@@ -137,6 +137,10 @@ export type EmplacementsRecordType = {
   /** "Prix par Semaine". Value is a raw number; display as currency with symbol "€", 2 decimal places, format: local (e.g. 1,000,000.50) */
   prixParSemaine?: number;
   disponibilite?: "Disponible" | "Réservé" | "Occupé" | "En maintenance" | string;
+  /** Latitude GPS (degrés décimaux) */
+  latitude?: number;
+  /** Longitude GPS (degrés décimaux) */
+  longitude?: number;
   photo?: ZiteAttachment[];
   /** Links to reservations ("Réservations"). Single record only. "Réservations" */
   reservations?: string | string[];
@@ -151,6 +155,8 @@ export type EmplacementsRecordInput = {
   format: string | null;
   prixParSemaine: string | number | null;
   disponibilite: "Disponible" | "Réservé" | "Occupé" | "En maintenance" | string | null;
+  latitude: number | null;
+  longitude: number | null;
   photo: ZiteAttachmentInput[] | ZiteAttachmentInput | null;
   reservations: string | string[] | null;
 };

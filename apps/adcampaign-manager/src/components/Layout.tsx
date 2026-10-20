@@ -25,7 +25,7 @@ const navItems: NavItem[] = [
   },
   { to: '/campagnes', label: 'Campagnes', icon: Megaphone, module: 'campagnes' },
   { to: '/clients', label: 'Clients', icon: Users, module: 'clients' },
-  { to: '/emplacements', label: 'Emplacements', icon: MapPin, module: 'emplacements' },
+  { to: '/emplacements', label: 'Panneaux', icon: MapPin, module: 'emplacements' },
   { to: '/reservations', label: 'Réservations', icon: CalendarCheck, module: 'reservations' },
   { to: '/impressions', label: 'Travaux', icon: Printer, module: 'impressions' },
   { to: '/factures', label: 'Facturation', icon: FileText, module: 'factures' },
@@ -129,7 +129,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="px-5 py-3 border-t border-slate-700 text-xs text-slate-500">
-          v1.8 · Régie Publicitaire
+          v1.9 · Régie Publicitaire
         </div>
       </aside>
 

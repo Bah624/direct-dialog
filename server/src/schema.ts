@@ -57,6 +57,8 @@ export const TABLES: Record<string, TableSchema> = {
       format: "single_line_text", // Format
       prixParSemaine: "currency", // Prix par Semaine
       disponibilite: "single_select", // Disponibilité
+      latitude: "number", // Latitude GPS
+      longitude: "number", // Longitude GPS
       photo: "attachments", // Photo
       reservations: "linked_record", // Réservations
     },

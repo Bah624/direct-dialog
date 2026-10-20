@@ -113,3 +113,38 @@ html.immersif .cockpit {
   height: 100vh !important;
   margin: 0 !important;
 }
+
+/* Marqueurs de la carte des panneaux */
+.dd-pin {
+  position: relative;
+  width: 26px;
+  height: 26px;
+}
+.dd-pin span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--pin);
+  border: 3px solid #fff;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.35);
+  transition: transform 0.15s ease;
+}
+.dd-pin::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  width: 9px;
+  height: 9px;
+  background: var(--pin);
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 1px;
+}
+.dd-pin-actif span {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.45), 0 6px 14px rgba(15, 23, 42, 0.35);
+}
+.leaflet-container {
+  font: inherit;
+  background: #e8eef5;
+}

@@ -522,7 +522,7 @@ export default function CockpitPage() {
     vue === 'siege'
       ? `Siège · ${departements.length} espaces · ${utilisateurs.length} responsable(s)`
       : vue === 'reseau'
-        ? `Réseau d'affichage · ${emplacements.length} emplacement(s)`
+        ? `Réseau d'affichage · ${emplacements.length} panneau(x)`
         : `Atelier de production · ${impressions.length} opération(s)`;
 
   const compte = (dispo: string) => emplacements.filter((e) => e.disponibilite === dispo).length;
@@ -551,7 +551,7 @@ export default function CockpitPage() {
               données. La gestion classique reste disponible.
             </p>
             <Button asChild variant="secondary" size="sm">
-              <Link to="/emplacements">Ouvrir les emplacements</Link>
+              <Link to="/emplacements">Ouvrir les panneaux</Link>
             </Button>
           </div>
         </div>
@@ -630,7 +630,7 @@ export default function CockpitPage() {
               {vue === 'siege'
                 ? 'Espaces'
                 : vue === 'reseau'
-                  ? 'Emplacements'
+                  ? 'Panneaux'
                   : 'Pôles de l’atelier'}
             </p>
             <span className="text-[11px] text-slate-400">

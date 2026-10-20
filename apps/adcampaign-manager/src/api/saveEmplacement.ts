@@ -13,6 +13,8 @@ export default createEndpoint({
     format: z.string().optional(),
     prixParSemaine: z.number().optional(),
     disponibilite: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
   }),
   outputSchema: z.object({ id: z.string(), success: z.boolean() }),
   execute: async ({ input }) => {

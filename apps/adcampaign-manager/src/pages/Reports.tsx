@@ -310,8 +310,8 @@ function EmplacementsReport({ data }: { data: ReportData }) {
   return (
     <>
       <FilterBar fields={fields} values={values} onChange={set} activeCount={activeCount} />
-      <SectionHeader title="Rapport Emplacements" count={rows.length} />
-      <PrintHeader title="Rapport Emplacements" count={rows.length} generatedAt={data.generatedAt} />
+      <SectionHeader title="Rapport Panneaux" count={rows.length} />
+      <PrintHeader title="Rapport Panneaux" count={rows.length} generatedAt={data.generatedAt} />
       <SortableTable headers={['Référence', 'Localisation', 'Ville', 'Type', 'Format', 'Prix/Semaine', 'Disponibilité']} rows={rows} />
     </>
   );
@@ -506,7 +506,7 @@ function SortiesReport({ data }: { data: ReportData }) {
 const tabConfig = [
   { id: 'clients', label: 'Clients', icon: Users },
   { id: 'campagnes', label: 'Campagnes', icon: Megaphone },
-  { id: 'emplacements', label: 'Emplacements', icon: MapPin },
+  { id: 'emplacements', label: 'Panneaux', icon: MapPin },
   { id: 'reservations', label: 'Réservations', icon: CalendarCheck },
   { id: 'impressions', label: 'Travaux', icon: Layers },
   { id: 'factures', label: 'Factures', icon: FileText },

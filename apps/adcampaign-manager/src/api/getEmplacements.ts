@@ -15,6 +15,8 @@ export default createEndpoint({
       format: z.string().optional(),
       prixParSemaine: z.number().optional(),
       disponibilite: z.string().optional(),
+      latitude: z.number().optional(),
+      longitude: z.number().optional(),
     })),
   }),
   execute: async ({ input }) => {
@@ -39,6 +41,8 @@ export default createEndpoint({
         format: e.format,
         prixParSemaine: e.prixParSemaine,
         disponibilite: e.disponibilite,
+        latitude: e.latitude,
+        longitude: e.longitude,
       })),
     };
   },

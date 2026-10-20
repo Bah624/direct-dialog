@@ -120,6 +120,31 @@ les profils qui n'ont pas accès à la facturation.
 
 ---
 
+## Panneaux & carte GPS (v1.9)
+
+Le module « Emplacements » devient **Panneaux**. Chaque panneau peut porter ses
+**coordonnées GPS** et être localisé sur une carte.
+
+![Carte des panneaux](docs/carte-panneaux.png)
+
+- **Vue Liste / Vue Carte** dans le module Panneaux.
+- La carte affiche un **marqueur coloré par disponibilité** (vert disponible, ambre réservé,
+  rouge occupé, gris en maintenance) et cadre automatiquement l'ensemble des panneaux.
+- Cliquer un marqueur ouvre la fiche du panneau (type, format, prix, coordonnées) avec un
+  bouton **Itinéraire** vers Google Maps.
+- Une colonne **Coordonnées GPS** apparaît dans la liste, et un bouton localise le panneau
+  sur la carte.
+
+![Coordonnées GPS](docs/gps-panneau.png)
+
+**Saisir les coordonnées** : ouvrir la fiche d'un panneau, puis soit cliquer directement sur
+la mini-carte (le repère se déplace), soit saisir latitude et longitude, soit utiliser
+**Ma position** (géolocalisation du navigateur). Les coordonnées sont enregistrées avec le
+panneau.
+
+Le fond de carte est **OpenStreetMap** : il nécessite une connexion Internet. Sans réseau,
+les marqueurs restent affichés sur un fond neutre.
+
 ## Paramètres, utilisateurs et rôles (v1.1)
 
 Un module **Paramètres** est accessible depuis la barre latérale, avec quatre onglets :

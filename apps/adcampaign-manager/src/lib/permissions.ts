@@ -4,7 +4,7 @@ export const MODULE_LABELS: Record<string, string> = {
   dashboard: 'Tableau de bord',
   campagnes: 'Campagnes',
   clients: 'Clients',
-  emplacements: 'Emplacements',
+  emplacements: 'Panneaux',
   reservations: 'Réservations',
   impressions: 'Travaux & impressions',
   factures: 'Facturation',
