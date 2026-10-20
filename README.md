@@ -187,6 +187,26 @@ En maintenance).
 | HUD | Chiffre d'affaires, campagnes en cours, réservations en attente, travaux planifiés, horloge |
 | Robustesse | Three.js chargé à la demande ; repli sur un message clair si WebGL est indisponible |
 
+### Vue Atelier (v1.5)
+
+![Atelier 3D](docs/cockpit-atelier.png)
+
+Le sélecteur **Réseau / Atelier** (en bas) ouvre une maquette 3D de l'atelier de production :
+
+| Poste | Contenu affiché |
+|---|---|
+| Impression | Les deux imprimantes grand format, le nombre de travaux d'impression |
+| Découpe & finition | Table de coupe, rouleaux de vinyle, travaux de pose/découpe/retouche |
+| Séchage | Rack de séchage, travaux terminés |
+| Stock atelier | Étagères ; passe en **alerte rouge** dès qu'un article est sous son seuil |
+| Expédition / pose | Palettes et panneaux prêts ; soudure, installation, maintenance |
+| Bureau chef d'atelier | Poste de supervision |
+
+Chaque poste porte une **étiquette flottante** (nom + nombre d'opérations) et est **cliquable** :
+la carte de droite liste alors les travaux concernés (référence, type, statut, machiniste),
+avec un accès direct au module Travaux. Les couleurs indiquent l'état : en cours (orange),
+planifié (jaune), alerte (rouge), libre (bleu).
+
 Le cockpit réutilise les données et les droits existants : il n'apparaît qu'aux profils ayant
 accès au tableau de bord ou aux emplacements, et n'ajoute aucune table.
 
@@ -230,7 +250,7 @@ server/
 │   └── endpoints.generated.ts (généré au build)
 ├── data/seed.json           données de départ
 └── build.mjs                compilation du serveur en un fichier autonome
-apps/adcampaign-manager/src/components/cockpit/  scène 3D (Three.js)
+apps/adcampaign-manager/src/components/cockpit/  scènes 3D réseau + atelier (Three.js)
 scripts/dev.sh               lancement sans Docker
 install.sh                   installateur client
 .github/workflows/           CI (build + tests de fumée) et release (image GHCR)
@@ -295,6 +315,7 @@ ZITE_OPENAI_ACCESS_TOKEN=sk-... docker compose up -d
 | Changement de mot de passe | ancien refusé, nouveau accepté |
 | Déconnexion | session invalidée (`401` ensuite) |
 | Cockpit 3D | scène WebGL rendue, panneaux cliquables, cadrage + fiche détaillée |
+| Vue Atelier | maquette 3D, 6 postes cliquables, opérations et alertes stock posées dessus |
 | Tableau de bord | 5 KPI, courbe 6 mois avec données, relances cliquables, pipeline et répartition |
 
 ---

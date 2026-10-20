@@ -3,21 +3,29 @@ import { Link } from 'react-router-dom';
 import {
   getDashboard,
   getEmplacements,
+  getImpressions,
   getReservations,
+  getStock,
   GetDashboardOutputType,
   GetEmplacementsOutputType,
+  GetImpressionsOutputType,
+  GetStockOutputType,
 } from 'zitejs/api';
 import { Badge } from '@project/components/ui/badge';
 import { Button } from '@project/components/ui/button';
-import { Skeleton } from '@project/components/ui/skeleton';
+import StatusBadge from '@/components/StatusBadge';
 import {
-  CalendarCheck, Crosshair, ExternalLink, Loader2, MapPin, Megaphone,
-  Printer, RotateCw, TrendingUp, AlertTriangle,
+  CalendarCheck, Crosshair, ExternalLink, Factory, Loader2, MapPin, Megaphone,
+  Network, Printer, RotateCw, TrendingUp, AlertTriangle, PackageX,
 } from 'lucide-react';
 import { creerScene, type Panneau, type SceneHandle } from '@/components/cockpit/scene';
+import { creerAtelier, ZONES_ATELIER, type AtelierHandle, type ZoneAtelier } from '@/components/cockpit/atelier';
 import { useSession } from '@/lib/session';
+import { cn } from '@project/components/lib/utils';
 
 type Emplacement = GetEmplacementsOutputType['emplacements'][0];
+type Impression = GetImpressionsOutputType['impressions'][0];
+type Article = GetStockOutputType['items'][0];
 
 const DISPOS = ['Disponible', 'Réservé', 'Occupé', 'En maintenance'] as const;
 
@@ -35,6 +43,19 @@ const TEXTE_DISPO: Record<string, string> = {
   'En maintenance': 'text-slate-300',
 };
 
+const COULEUR_ZONE: Record<string, string> = {
+  active: 'bg-orange-500',
+  attente: 'bg-amber-400',
+  alerte: 'bg-red-500',
+  libre: 'bg-sky-400',
+};
+
+const ZONES_TRAVAUX: Record<string, string[]> = {
+  impression: ['Impression'],
+  finition: ['Décapoter (retrait vinyle)', 'Pose de vinyle', 'Retouche & finition'],
+  expedition: ['Soudure', 'Installation panneau', 'Maintenance / Réparation', 'Affichage', 'Branding'],
+};
+
 function webglDisponible(): boolean {
   try {
     const canvas = document.createElement('canvas');
@@ -49,9 +70,12 @@ export default function CockpitPage() {
   const devise = data?.societe?.devise ?? 'GNF';
 
   const conteneur = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<SceneHandle | null>(null);
+  const sceneRef = useRef<SceneHandle | AtelierHandle | null>(null);
 
+  const [vue, setVue] = useState<'reseau' | 'atelier'>('reseau');
   const [emplacements, setEmplacements] = useState<Emplacement[]>([]);
+  const [impressions, setImpressions] = useState<Impression[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [dashboard, setDashboard] = useState<GetDashboardOutputType | null>(null);
   const [reservationsEnAttente, setReservationsEnAttente] = useState(0);
   const [chargement, setChargement] = useState(true);
@@ -61,28 +85,35 @@ export default function CockpitPage() {
   const [filtre, setFiltre] = useState<string | null>(null);
   const [heure, setHeure] = useState(new Date());
 
-  // --- Chargement des données ---------------------------------------------
+  // --- Chargement -----------------------------------------------------------
   useEffect(() => {
     let annule = false;
     (async () => {
-      const [reponseEmplacements, reponseDashboard, reponseReservations] = await Promise.allSettled([
+      const [emp, dash, resa, trav, stock] = await Promise.allSettled([
         getEmplacements({}),
         getDashboard({}),
         getReservations({}),
+        getImpressions({}),
+        getStock({}),
       ]);
       if (annule) return;
 
-      if (reponseEmplacements.status === 'fulfilled') {
-        setEmplacements(reponseEmplacements.value.emplacements as Emplacement[]);
-      } else {
-        setIndisponible(true);
+      if (emp.status === 'fulfilled') {
+        setEmplacements(((emp.value as any).emplacements ?? []) as Emplacement[]);
       }
-      if (reponseDashboard.status === 'fulfilled') setDashboard(reponseDashboard.value);
-      if (reponseReservations.status === 'fulfilled') {
-        const enAttente = reponseReservations.value.reservations.filter(
-          (r) => r.statut === 'En attente',
-        ).length;
-        setReservationsEnAttente(enAttente);
+      else setIndisponible(true);
+      if (dash.status === 'fulfilled') setDashboard(dash.value);
+      if (resa.status === 'fulfilled') {
+        setReservationsEnAttente(
+          resa.value.reservations.filter((r) => r.statut === 'En attente').length,
+        );
+      }
+      if (trav.status === 'fulfilled') {
+        setImpressions(((trav.value as any).impressions ?? []) as Impression[]);
+      }
+      if (stock.status === 'fulfilled') {
+        const donnees = stock.value as any;
+        setArticles((donnees.items ?? donnees.stock ?? []) as Article[]);
       }
       setChargement(false);
     })();
@@ -91,12 +122,12 @@ export default function CockpitPage() {
     };
   }, []);
 
-  // --- Horloge --------------------------------------------------------------
   useEffect(() => {
     const timer = setInterval(() => setHeure(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  // --- Données réseau --------------------------------------------------------
   const panneaux = useMemo<Panneau[]>(
     () =>
       emplacements.map((e) => ({
@@ -112,39 +143,105 @@ export default function CockpitPage() {
     [emplacements],
   );
 
+  // --- Données atelier -------------------------------------------------------
+  const articlesEnAlerte = useMemo(
+    () =>
+      articles.filter(
+        (a) => Number(a.quantiteEnStock ?? 0) <= Number(a.seuilDAlerte ?? 0),
+      ),
+    [articles],
+  );
+
+  const operationsParZone = useMemo<Record<string, Impression[]>>(
+    () => ({
+      impression: impressions.filter((i) =>
+        ZONES_TRAVAUX.impression.includes(i.typeDeTravaux ?? ''),
+      ),
+      finition: impressions.filter((i) =>
+        ZONES_TRAVAUX.finition.includes(i.typeDeTravaux ?? ''),
+      ),
+      sechage: impressions.filter((i) => i.statut === 'Terminée'),
+      expedition: impressions.filter((i) =>
+        ZONES_TRAVAUX.expedition.includes(i.typeDeTravaux ?? ''),
+      ),
+      stock: [],
+      bureau: [],
+    }),
+    [impressions],
+  );
+
+  const zones = useMemo<ZoneAtelier[]>(() => {
+    const statutDe = (liste: Impression[]): ZoneAtelier['statut'] => {
+      if (liste.some((i) => i.statut === 'En cours')) return 'active';
+      if (liste.some((i) => i.statut === 'Planifiée')) return 'attente';
+      if (liste.length > 0) return 'libre';
+      return 'libre';
+    };
+
+    return ZONES_ATELIER.map((z) => {
+      if (z.id === 'stock') {
+        return {
+          ...z,
+          operations: articlesEnAlerte.length,
+          statut: articlesEnAlerte.length > 0 ? 'alerte' : 'libre',
+        };
+      }
+      if (z.id === 'bureau') return { ...z, operations: 0, statut: 'libre' };
+      const liste = operationsParZone[z.id] ?? [];
+      return { ...z, operations: liste.length, statut: statutDe(liste) };
+    });
+  }, [operationsParZone, articlesEnAlerte]);
+
   // --- Scène 3D -------------------------------------------------------------
   useEffect(() => {
-    if (!conteneur.current || panneaux.length === 0) return;
+    if (!conteneur.current) return;
     if (!webglDisponible()) {
       setIndisponible(true);
       return;
     }
-    const handle = creerScene(conteneur.current, panneaux, {
-      rotation: true,
-      onSelect: (id) => setSelection(id),
-    });
+
+    const handle =
+      vue === 'reseau'
+        ? creerScene(conteneur.current, panneaux, {
+            rotation: true,
+            onSelect: (id) => setSelection(id),
+          })
+        : creerAtelier(conteneur.current, zones, {
+            rotation: true,
+            onSelect: (id) => setSelection(id),
+          });
+
     sceneRef.current = handle;
     return () => {
       handle.dispose();
       sceneRef.current = null;
     };
-  }, [panneaux]);
+  }, [vue, panneaux, zones]);
 
   useEffect(() => {
     sceneRef.current?.setRotation(rotation);
   }, [rotation]);
 
   useEffect(() => {
-    sceneRef.current?.setFiltre(filtre);
-  }, [filtre]);
+    if (vue === 'reseau' && 'setFiltre' in (sceneRef.current ?? {})) {
+      (sceneRef.current as SceneHandle).setFiltre(filtre);
+    }
+  }, [filtre, vue]);
 
-  const selectionne = emplacements.find((e) => e.id === selection) ?? null;
+  useEffect(() => {
+    setSelection(null);
+    setFiltre(null);
+  }, [vue]);
 
   const choisir = (id: string | null) => {
     setSelection(id);
     sceneRef.current?.focus(id);
     if (id) setRotation(false);
   };
+
+  const emplacementSelectionne = emplacements.find((e) => e.id === selection) ?? null;
+  const zoneSelectionnee = vue === 'atelier' ? zones.find((z) => z.id === selection) ?? null : null;
+  const operationsSelectionnees = selection ? operationsParZone[selection] ?? [] : [];
 
   const stats = [
     {
@@ -177,11 +274,8 @@ export default function CockpitPage() {
 
   return (
     <div className="relative -m-4 md:-m-6 h-[calc(100vh-3.5rem)] overflow-hidden bg-[#050b18] text-white">
-      {/* Scène */}
       <div ref={conteneur} className="absolute inset-0" />
-
-      {/* Dégradés de lisibilité */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(5,11,24,0.85)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_38%,rgba(5,11,24,0.85)_100%)]" />
 
       {chargement && (
         <div className="absolute inset-0 grid place-items-center bg-[#050b18]">
@@ -196,10 +290,10 @@ export default function CockpitPage() {
         <div className="absolute inset-0 grid place-items-center p-6">
           <div className="max-w-md text-center space-y-3 rounded-xl border border-white/10 bg-slate-900/80 p-6">
             <AlertTriangle className="w-9 h-9 mx-auto text-amber-400" />
-            <p className="font-semibold">Cockpit 3D indisponible</p>
+            <p className="font-semibold">Vue 3D indisponible</p>
             <p className="text-sm text-slate-400">
               Votre navigateur ne prend pas en charge WebGL, ou votre profil n’a pas accès aux
-              emplacements. La gestion classique reste disponible.
+              données. La gestion classique reste disponible.
             </p>
             <Button asChild variant="secondary" size="sm">
               <Link to="/emplacements">Ouvrir les emplacements</Link>
@@ -214,7 +308,9 @@ export default function CockpitPage() {
           <p className="text-[11px] uppercase tracking-[0.2em] text-sky-400/80">Direct Dialog</p>
           <h1 className="text-xl md:text-2xl font-semibold leading-tight">Cockpit 3D</h1>
           <p className="text-xs text-slate-400">
-            Réseau d’affichage en temps réel · {emplacements.length} emplacement(s)
+            {vue === 'reseau'
+              ? `Réseau d’affichage · ${emplacements.length} emplacement(s)`
+              : `Atelier de production · ${impressions.length} opération(s)`}
           </p>
         </div>
       </div>
@@ -262,98 +358,123 @@ export default function CockpitPage() {
         ))}
       </div>
 
-      {/* Liste des emplacements */}
+      {/* Panneau latéral */}
       <div className="absolute right-4 md:right-6 top-28 md:top-32 w-72 md:w-80 hidden md:flex flex-col gap-3">
         <div className="rounded-xl border border-white/10 bg-slate-900/70 backdrop-blur-md overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-            <p className="text-sm font-medium">Emplacements</p>
-            <span className="text-[11px] text-slate-400">{emplacements.length}</span>
+            <p className="text-sm font-medium">
+              {vue === 'reseau' ? 'Emplacements' : 'Postes de l’atelier'}
+            </p>
+            <span className="text-[11px] text-slate-400">
+              {vue === 'reseau' ? emplacements.length : zones.length}
+            </span>
           </div>
 
-          <div className="flex flex-wrap gap-1 px-3 py-2 border-b border-white/10">
-            <button
-              onClick={() => setFiltre(null)}
-              className={`text-[11px] rounded-full px-2 py-1 transition ${
-                !filtre ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              Tous
-            </button>
-            {DISPOS.map((d) => (
-              <button
-                key={d}
-                onClick={() => setFiltre(filtre === d ? null : d)}
-                className={`text-[11px] rounded-full px-2 py-1 transition ${
-                  filtre === d ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
-
-          <div className="max-h-64 overflow-y-auto">
-            {emplacements
-              .filter((e) => !filtre || e.disponibilite === filtre)
-              .map((e) => (
+          {vue === 'reseau' ? (
+            <>
+              <div className="flex flex-wrap gap-1 px-3 py-2 border-b border-white/10">
                 <button
-                  key={e.id}
-                  onClick={() => choisir(e.id)}
-                  className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition hover:bg-white/5 ${
-                    selection === e.id ? 'bg-white/10' : ''
-                  }`}
+                  onClick={() => setFiltre(null)}
+                  className={cn(
+                    'text-[11px] rounded-full px-2 py-1 transition',
+                    !filtre ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10',
+                  )}
                 >
-                  <span
-                    className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      COULEUR_DISPO[e.disponibilite ?? ''] ?? 'bg-sky-400'
-                    }`}
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-xs font-medium truncate">
-                      {e.referenceEmplacement}
-                    </span>
-                    <span className="block text-[11px] text-slate-400 truncate">
-                      {e.ville} · {e.type}
-                    </span>
-                  </span>
+                  Tous
+                </button>
+                {DISPOS.map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setFiltre(filtre === d ? null : d)}
+                    className={cn(
+                      'text-[11px] rounded-full px-2 py-1 transition',
+                      filtre === d ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10',
+                    )}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+
+              <div className="max-h-64 overflow-y-auto">
+                {emplacements
+                  .filter((e) => !filtre || e.disponibilite === filtre)
+                  .map((e) => (
+                    <button
+                      key={e.id}
+                      onClick={() => choisir(e.id)}
+                      className={cn(
+                        'w-full text-left px-4 py-2.5 flex items-center gap-3 transition hover:bg-white/5',
+                        selection === e.id && 'bg-white/10',
+                      )}
+                    >
+                      <span className={cn('w-2 h-2 rounded-full flex-shrink-0', COULEUR_DISPO[e.disponibilite ?? ''] ?? 'bg-sky-400')} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-xs font-medium truncate">{e.referenceEmplacement}</span>
+                        <span className="block text-[11px] text-slate-400 truncate">
+                          {e.ville} · {e.type}
+                        </span>
+                      </span>
+                      <span className="text-[11px] text-slate-400 tabular-nums">
+                        {(e.prixParSemaine ?? 0).toLocaleString('fr-FR')}
+                      </span>
+                    </button>
+                  ))}
+                {emplacements.length === 0 && (
+                  <p className="px-4 py-6 text-xs text-slate-400 text-center">
+                    Aucun emplacement enregistré.
+                  </p>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="max-h-64 overflow-y-auto">
+              {zones.map((z) => (
+                <button
+                  key={z.id}
+                  onClick={() => choisir(z.id)}
+                  className={cn(
+                    'w-full text-left px-4 py-3 flex items-center gap-3 transition hover:bg-white/5',
+                    selection === z.id && 'bg-white/10',
+                  )}
+                >
+                  <span className={cn('w-2 h-2 rounded-full flex-shrink-0', COULEUR_ZONE[z.statut])} />
+                  <span className="min-w-0 flex-1 text-xs font-medium truncate">{z.nom}</span>
                   <span className="text-[11px] text-slate-400 tabular-nums">
-                    {(e.prixParSemaine ?? 0).toLocaleString('fr-FR')}
+                    {z.operations}
                   </span>
                 </button>
               ))}
-            {emplacements.length === 0 && (
-              <p className="px-4 py-6 text-xs text-slate-400 text-center">
-                Aucun emplacement enregistré.
-              </p>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        {selectionne && (
+        {/* Détail réseau */}
+        {vue === 'reseau' && emplacementSelectionne && (
           <div className="rounded-xl border border-white/10 bg-slate-900/80 backdrop-blur-md p-4 space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm font-semibold">{selectionne.referenceEmplacement}</p>
+                <p className="text-sm font-semibold">{emplacementSelectionne.referenceEmplacement}</p>
                 <p className="text-[11px] text-slate-400">
-                  {selectionne.localisation} · {selectionne.ville}
+                  {emplacementSelectionne.localisation} · {emplacementSelectionne.ville}
                 </p>
               </div>
               <Badge
                 variant="outline"
-                className={`border-white/10 ${TEXTE_DISPO[selectionne.disponibilite ?? ''] ?? 'text-sky-400'}`}
+                className={cn('border-white/10', TEXTE_DISPO[emplacementSelectionne.disponibilite ?? ''] ?? 'text-sky-400')}
               >
-                {selectionne.disponibilite}
+                {emplacementSelectionne.disponibilite}
               </Badge>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <Info libelle="Type" valeur={selectionne.type ?? '—'} />
-              <Info libelle="Format" valeur={selectionne.format ?? '—'} />
+              <Info libelle="Type" valeur={emplacementSelectionne.type ?? '—'} />
+              <Info libelle="Format" valeur={emplacementSelectionne.format ?? '—'} />
               <Info
                 libelle="Prix / semaine"
-                valeur={`${(selectionne.prixParSemaine ?? 0).toLocaleString('fr-FR')} ${devise}`}
+                valeur={`${(emplacementSelectionne.prixParSemaine ?? 0).toLocaleString('fr-FR')} ${devise}`}
               />
-              <Info libelle="Ville" valeur={selectionne.ville ?? '—'} />
+              <Info libelle="Ville" valeur={emplacementSelectionne.ville ?? '—'} />
             </div>
 
             <Button asChild size="sm" className="w-full gap-2">
@@ -363,29 +484,128 @@ export default function CockpitPage() {
             </Button>
           </div>
         )}
+
+        {/* Détail atelier */}
+        {vue === 'atelier' && zoneSelectionnee && (
+          <div className="rounded-xl border border-white/10 bg-slate-900/80 backdrop-blur-md p-4 space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold">{zoneSelectionnee.nom}</p>
+                <p className="text-[11px] text-slate-400">
+                  {zoneSelectionnee.operations} opération(s) affectée(s)
+                </p>
+              </div>
+              <span className={cn('mt-1 w-2.5 h-2.5 rounded-full', COULEUR_ZONE[zoneSelectionnee.statut])} />
+            </div>
+
+            {zoneSelectionnee.id === 'stock' ? (
+              articlesEnAlerte.length > 0 ? (
+                <ul className="space-y-1.5 max-h-40 overflow-y-auto">
+                  {articlesEnAlerte.slice(0, 6).map((a) => (
+                    <li key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
+                      <span className="truncate text-slate-300">{a.nomArticle ?? a.referenceArticle}</span>
+                      <span className="text-red-400 tabular-nums whitespace-nowrap">
+                        {a.quantiteEnStock ?? 0} / {a.seuilDAlerte ?? 0}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-[11px] text-slate-400">Aucune alerte de stock.</p>
+              )
+            ) : operationsSelectionnees.length > 0 ? (
+              <ul className="space-y-2 max-h-44 overflow-y-auto">
+                {operationsSelectionnees.slice(0, 6).map((operation) => (
+                  <li key={operation.id} className="rounded-md bg-white/5 px-2 py-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-medium truncate">
+                        {operation.referenceImpression ?? 'Travaux'}
+                      </span>
+                      <StatusBadge status={operation.statut} />
+                    </div>
+                    <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                      {operation.typeDeTravaux ?? '—'}
+                      {operation.machinisteAssigne ? ` · ${operation.machinisteAssigne}` : ''}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[11px] text-slate-400">Aucune opération sur ce poste.</p>
+            )}
+
+            <Button asChild size="sm" variant="secondary" className="w-full gap-2">
+              <Link to="/impressions">
+                Ouvrir les travaux <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Légende */}
-      <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 flex items-center gap-4 rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 backdrop-blur text-[11px] text-slate-300">
-        {DISPOS.map((d) => (
-          <span key={d} className="flex items-center gap-1.5">
-            <span className={`w-2 h-2 rounded-full ${COULEUR_DISPO[d]}`} />
-            {d} <span className="text-slate-500">({compte(d)})</span>
-          </span>
-        ))}
+      <div className="absolute bottom-20 md:bottom-24 left-4 md:left-6 flex items-center gap-4 rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 backdrop-blur text-[11px] text-slate-300">
+        {vue === 'reseau' ? (
+          DISPOS.map((d) => (
+            <span key={d} className="flex items-center gap-1.5">
+              <span className={cn('w-2 h-2 rounded-full', COULEUR_DISPO[d])} />
+              {d} <span className="text-slate-500">({compte(d)})</span>
+            </span>
+          ))
+        ) : (
+          <>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-orange-500" /> En cours
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400" /> Planifié
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-500" /> Alerte
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-sky-400" /> Libre
+            </span>
+          </>
+        )}
+      </div>
+
+      {/* Sélecteur de vue */}
+      <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-xl border border-white/10 bg-slate-900/80 p-1 backdrop-blur-md">
+        <button
+          onClick={() => setVue('reseau')}
+          className={cn(
+            'flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition',
+            vue === 'reseau' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5',
+          )}
+        >
+          <Network className="w-4 h-4" /> Réseau
+        </button>
+        <button
+          onClick={() => setVue('atelier')}
+          className={cn(
+            'flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition',
+            vue === 'atelier' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5',
+          )}
+        >
+          <Factory className="w-4 h-4" /> Atelier
+        </button>
       </div>
 
       {/* Aide navigation */}
       <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 hidden sm:flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 backdrop-blur text-[11px] text-slate-400">
-        <MapPin className="w-3.5 h-3.5" />
-        Glisser pour pivoter · molette pour zoomer · cliquer un panneau
+        {vue === 'reseau' ? (
+          <>
+            <MapPin className="w-3.5 h-3.5" />
+            Glisser pour pivoter · cliquer un panneau
+          </>
+        ) : (
+          <>
+            <PackageX className="w-3.5 h-3.5" />
+            Cliquer un poste pour voir les opérations
+          </>
+        )}
       </div>
-
-      {chargement && (
-        <div className="absolute left-4 md:left-6 top-28 w-56 hidden lg:block">
-          <Skeleton className="h-16 w-full bg-white/5" />
-        </div>
-      )}
     </div>
   );
 }
