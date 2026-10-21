@@ -58,6 +58,11 @@ function RuntimeErrorFallback(props: { error: Error }) {
   );
 }
 
+// Application native (APK) : classe dédiée pour les marges de sécurité.
+if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()) {
+  document.documentElement.classList.add('native-app');
+}
+
 // Service worker : installation PWA et écran hors ligne (production seulement).
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {

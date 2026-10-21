@@ -17,6 +17,14 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
   },
+  plugins: {
+    // La barre d'état ne recouvre plus l'application : le menu démarre sous l'heure.
+    StatusBar: {
+      overlaysWebView: false,
+      style: 'DARK',
+      backgroundColor: '#0f172a',
+    },
+  },
 };
 
 export default config;

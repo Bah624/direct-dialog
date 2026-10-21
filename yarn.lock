@@ -623,6 +623,11 @@
   dependencies:
     tslib "^2.1.0"
 
+"@capacitor/status-bar@^8.0.4":
+  version "8.0.4"
+  resolved "https://registry.yarnpkg.com/@capacitor/status-bar/-/status-bar-8.0.4.tgz#ce93e52c2feba9ef218c7bd3e839aa447c183269"
+  integrity sha512-ZMzBUyHBzwDUxcHadEhvOvmoPmMQGMZgaMRJu8ohELeI6IaxoVH9ZhdF/OHnY3/yykv3Glev8Tnbh4aZY/0B0w==
+
 "@clickhouse/client-web@1.23.1":
   version "1.23.1"
   resolved "https://registry.yarnpkg.com/@clickhouse/client-web/-/client-web-1.23.1.tgz#2b3bab6314a6e174070b6e5b4a659832caef5e19"
