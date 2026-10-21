@@ -164,6 +164,59 @@ panneau.
 Le fond de carte est **OpenStreetMap** : il nécessite une connexion Internet. Sans réseau,
 les marqueurs restent affichés sur un fond neutre.
 
+## Application mobile : PWA et Android (v2.5)
+
+L'application s'installe sur un téléphone de deux façons.
+
+### 1. Depuis le navigateur (PWA, immédiat)
+
+Ouvrez l'application sur le téléphone (Chrome / Safari), puis :
+
+- **Android / Chrome** : menu ⋮ → **Installer l'application** (ou « Ajouter à l'écran d'accueil »)
+- **iPhone / Safari** : Partager → **Sur l'écran d'accueil**
+
+L'icône DIRECT DIALOG est ajoutée, l'application s'ouvre en plein écran et garde la coque en
+cache pour un démarrage rapide. Le manifeste (`/manifest.webmanifest`), les icônes et le
+service worker (`/sw.js`) sont déjà livrés.
+
+### 2. APK Android (Play Store ou installation directe)
+
+Le projet Android (Capacitor) est dans `apps/adcampaign-manager/android`.
+
+**Compiler l'APK / l'AAB avec GitHub Actions** :
+
+1. GitHub → onglet **Actions** → workflow **Android** → *Run workflow*.
+2. Renseignez l'**URL de l'application** (celle de votre serveur Docker, ex.
+   `https://app.votre-domaine.com`) et la version.
+3. À la fin, téléchargez l'artefact `direct-dialog-android` :
+   - `app-debug.apk` : à installer directement sur le téléphone (sources inconnues) ;
+   - `app-release.aab` : à déposer dans la Play Console.
+
+L'APK est aussi joint automatiquement aux releases GitHub (téléchargement depuis le téléphone).
+
+**Signature Play Store** :
+
+```bash
+./scripts/creer-keystore.sh          # crée direct-dialog-release.jks
+base64 < direct-dialog-release.jks | tr -d '\n'   # valeur du secret
+```
+
+Ajoutez ces secrets dans *GitHub → Settings → Secrets and variables → Actions* :
+
+| Secret | Valeur |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | sortie de la commande base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | mot de passe du magasin |
+| `ANDROID_KEY_ALIAS` | alias (par défaut `direct-dialog`) |
+| `ANDROID_KEY_PASSWORD` | mot de passe de la clé |
+
+Avec ces secrets, le workflow produit un **AAB signé**. Publiez-le dans la Play Console
+(compte développeur 25 $, fiche store, captures, politique de confidentialité).
+
+> L'application mobile charge l'application servie par votre installation : le serveur doit
+> être accessible depuis les téléphones (HTTPS recommandé). L'URL est fixée à la compilation
+> via `CAP_SERVER_URL`.
+
 ## Espace client et réservation en ligne (v2.4)
 
 ![Inscription client](docs/inscription-client.png)

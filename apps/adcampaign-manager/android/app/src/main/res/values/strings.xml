@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Direct Dialog</string>
+    <string name="title_activity_main">Direct Dialog</string>
+    <string name="package_name">com.directdialog.app</string>
+    <string name="custom_url_scheme">com.directdialog.app</string>
+</resources>

@@ -715,7 +715,7 @@ function OngletSysteme({ onRafraichir }: { onRafraichir: () => Promise<void> }) 
           <CardDescription>Informations techniques de l’installation.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <Ligne libelle="Version" valeur="2.4.0" />
+          <Ligne libelle="Version" valeur="2.5.0" />
           <Ligne libelle="Société" valeur={data?.societe?.nom ?? '—'} />
           <Ligne libelle="Devise" valeur={data?.societe?.devise ?? '—'} />
           <Ligne libelle="TVA par défaut" valeur={`${data?.societe?.tauxTva ?? 0} %`} />
