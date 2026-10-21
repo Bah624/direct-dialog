@@ -28,3 +28,5 @@ apps/adcampaign-manager/android/.gradle/
 apps/adcampaign-manager/android/local.properties
 apps/adcampaign-manager/android/keystore.properties
 apps/adcampaign-manager/android/app/keystore.jks
+# APK téléchargés localement (distribués via les releases GitHub)
+apk/
