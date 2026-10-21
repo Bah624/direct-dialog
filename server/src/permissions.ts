@@ -121,6 +121,9 @@ export const DEFAULT_PERMISSIONS: Permissions = {
   Soudeur: droits(['dashboard', 'impressions'], ['impressions']),
 
   'Décorateur': droits(['dashboard', 'impressions', 'stock', 'campagnes'], ['impressions']),
+
+  // Espace client : uniquement les panneaux disponibles et la réservation.
+  Client: droits(['emplacements', 'reservations'], ['reservations']),
 };
 
 export function accessFor(

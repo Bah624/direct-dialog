@@ -313,8 +313,42 @@ function OngletUtilisateurs() {
     }
   };
 
+  const lienInscription = `${window.location.origin}/inscription`;
+
+  const copierLien = async () => {
+    try {
+      await navigator.clipboard.writeText(lienInscription);
+      toast.success('Lien d’inscription copié');
+    } catch {
+      toast.error('Copie impossible');
+    }
+  };
+
   return (
     <div className="space-y-4">
+      <Card className="border-primary/30 bg-primary/5">
+        <CardContent className="p-4 space-y-3">
+          <div>
+            <p className="text-sm font-medium flex items-center gap-2">
+              <UserPlus className="w-4 h-4 text-primary" /> Lien d’inscription client
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Partagez ce lien : le client crée son compte, consulte les panneaux disponibles et
+              réserve uniquement ceux qui sont libres.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input readOnly value={lienInscription} className="flex-1 min-w-64 font-mono text-xs" />
+            <Button variant="outline" onClick={copierLien} className="gap-2">
+              <Download className="w-4 h-4" /> Copier
+            </Button>
+            <Button asChild className="gap-2">
+              <a href="/inscription" target="_blank" rel="noreferrer">Ouvrir</a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-56">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -681,7 +715,7 @@ function OngletSysteme({ onRafraichir }: { onRafraichir: () => Promise<void> }) 
           <CardDescription>Informations techniques de l’installation.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <Ligne libelle="Version" valeur="2.3.0" />
+          <Ligne libelle="Version" valeur="2.4.0" />
           <Ligne libelle="Société" valeur={data?.societe?.nom ?? '—'} />
           <Ligne libelle="Devise" valeur={data?.societe?.devise ?? '—'} />
           <Ligne libelle="TVA par défaut" valeur={`${data?.societe?.tauxTva ?? 0} %`} />

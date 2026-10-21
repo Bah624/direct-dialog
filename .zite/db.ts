@@ -488,6 +488,8 @@ export type UtilisateursRecordType = {
   motDePasseHash?: string;
   /** Demande de changement de mot de passe à la prochaine connexion. */
   doitChangerMotDePasse?: boolean;
+  /** Fiche client liée (profil Client) */
+  clientId?: string;
   /** "Dernière Connexion" (YYYY-MM-DD) */
   derniereConnexion?: string;
   /** Read-only. "Date Création". */

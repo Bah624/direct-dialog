@@ -22,6 +22,7 @@ import {
   lireCookie,
   sessionUtilisateur,
   verifierMotDePasse,
+  hasherMotDePasse,
 } from './auth';
 import { avecUtilisateur, utilisateurCourant } from './requete';
 import { can } from './permissions';
@@ -312,6 +313,316 @@ app.post('/api/notifications/envoyer', async (_req, res) => {
     forcer: true,
   });
   res.json(resultat);
+});
+
+// ---------------------------------------------------------------------------
+// Espace client public : inscription, panneaux disponibles, réservation.
+// ---------------------------------------------------------------------------
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+async function notifierAdmins(settingsRef: typeof settings, archive: (p: Record<string, any>) => Promise<any>, sujet: string, texte: string) {
+  const config = normaliserCanaux(await settingsRef.get<Canaux>('notifications', DEFAULT_CANAUX));
+
+  // Les alertes client partent toujours : destinataires configurés, sinon
+  // l'e-mail de la société, sinon les comptes administrateurs.
+  let destinataires = config.email.destinataires;
+  if (destinataires.length === 0) {
+    const societe = await settingsRef.societe();
+    if (societe.email) destinataires = [societe.email];
+  }
+  if (destinataires.length === 0) {
+    const { records } = await zite.utilisateurs.findAll({ limit: 500 });
+    destinataires = records
+      .filter((u) => u.profil === 'Administrateur' && u.email)
+      .map((u) => String(u.email));
+  }
+
+  const cible: Canaux = {
+    ...config,
+    telegram: { ...config.telegram, actif: false },
+    whatsapp: { ...config.whatsapp, actif: false },
+    email: { actif: destinataires.length > 0, destinataires },
+  };
+  return envoyerSurCanaux(cible, sujet, texte, archive);
+}
+
+async function notifierClient(
+  settingsRef: typeof settings,
+  archive: (p: Record<string, any>) => Promise<any>,
+  email: string,
+  sujet: string,
+  texte: string,
+) {
+  const config = normaliserCanaux(await settingsRef.get<Canaux>('notifications', DEFAULT_CANAUX));
+  const cible: Canaux = {
+    ...config,
+    telegram: { ...config.telegram, actif: false },
+    whatsapp: { ...config.whatsapp, actif: false },
+    email: { actif: true, destinataires: [email] },
+  };
+  return envoyerSurCanaux(cible, sujet, texte, archive);
+}
+
+app.post('/api/inscription', async (req, res) => {
+  const nomComplet = String(req.body?.nomComplet ?? '').trim();
+  const societe = String(req.body?.societe ?? '').trim();
+  const email = String(req.body?.email ?? '').trim().toLowerCase();
+  const telephone = String(req.body?.telephone ?? '').trim();
+  const motDePasse = String(req.body?.motDePasse ?? '');
+
+  if (!nomComplet || !EMAIL_REGEX.test(email) || motDePasse.length < 8) {
+    res.status(400).json({ message: 'Nom, e-mail valide et mot de passe de 8 caractères minimum requis.' });
+    return;
+  }
+
+  const { records } = await zite.utilisateurs.findAll({ limit: 1000 });
+  if (records.some((u) => (u.email ?? '').toLowerCase() === email)) {
+    res.status(409).json({ message: 'Un compte existe déjà avec cet e-mail.' });
+    return;
+  }
+
+  // Fiche client (pour les réservations et les factures).
+  const client = await zite.clients.create({
+    record: {
+      nomClient: societe || nomComplet,
+      email,
+      telephone: telephone || undefined,
+      statut: 'Actif',
+      secteurDactivite: undefined,
+      adresse: undefined,
+    },
+  });
+
+  const utilisateur = await zite.utilisateurs.create({
+    record: {
+      nomComplet,
+      email,
+      telephone: telephone || undefined,
+      profil: 'Client',
+      statut: 'Actif',
+      notes: societe ? `Société : ${societe}` : undefined,
+      motDePasseHash: hasherMotDePasse(motDePasse),
+      doitChangerMotDePasse: false,
+      clientId: client.id,
+    },
+  });
+
+  // Connexion immédiate du client.
+  const { token } = await creerSession(utilisateur.id);
+  res.cookie(SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.COOKIE_SECURE === '1',
+    maxAge: DUREE_SESSION_MS,
+    path: '/',
+  });
+
+  // Notifications : équipe + confirmation client.
+  const texteAdmin = [
+    'Nouvelle inscription client',
+    '',
+    `Nom : ${nomComplet}`,
+    societe ? `Société : ${societe}` : '',
+    `E-mail : ${email}`,
+    telephone ? `Téléphone : ${telephone}` : '',
+    '',
+    'Le client peut désormais consulter les panneaux disponibles et réserver.',
+  ].filter(Boolean).join('\n');
+  const texteClient = [
+    `Bonjour ${nomComplet},`,
+    '',
+    'Votre compte DIRECT DIALOG est créé.',
+    'Vous pouvez consulter les panneaux disponibles et réserver ceux qui vous intéressent.',
+    '',
+    '— DIRECT DIALOG',
+  ].join('\n');
+
+  Promise.all([
+    notifierAdmins(settings, archiveEmail, '[DIRECT DIALOG] Nouvelle inscription client', texteAdmin),
+    notifierClient(settings, archiveEmail, email, 'Bienvenue chez DIRECT DIALOG', texteClient),
+  ]).catch((erreur) => console.error('[inscription] notification :', erreur));
+
+  res.json({ success: true, utilisateur: utilisateurPublic(utilisateur), clientId: client.id });
+});
+
+app.get('/api/panneaux-disponibles', async (req, res) => {
+  const utilisateur = utilisateurCourant();
+  if (!utilisateur) {
+    res.status(401).json({ message: 'Connectez-vous pour voir les panneaux.' });
+    return;
+  }
+
+  const [{ records: emplacements }, { records: reservations }] = await Promise.all([
+    zite.emplacements.findAll({ limit: 1000 }),
+    zite.reservations.findAll({ limit: 1000 }),
+  ]);
+
+  const occupees = new Set(
+    reservations
+      .filter((r) => ['En attente', 'Confirmée', 'En cours'].includes(String(r.statut ?? '')))
+      .map((r) => (Array.isArray(r.emplacement) ? r.emplacement[0] : r.emplacement))
+      .filter(Boolean),
+  );
+
+  const disponibles = emplacements
+    .filter((e) => e.disponibilite === 'Disponible' && !occupees.has(e.id))
+    .map((e) => ({
+      id: e.id,
+      reference: e.referenceEmplacement,
+      quartier: e.quartier ?? '',
+      ville: e.ville ?? '',
+      localisation: e.localisation ?? '',
+      type: e.type ?? '',
+      format: e.format ?? '',
+      prixParSemaine: e.prixParSemaine ?? 0,
+      latitude: e.latitude,
+      longitude: e.longitude,
+      disponibleDu: e.disponibleDu ?? '',
+      disponibleAu: e.disponibleAu ?? '',
+      photo: Array.isArray(e.photo) ? e.photo.map((p: any) => p?.url).filter(Boolean) : [],
+    }));
+
+  res.json({ panneaux: disponibles });
+});
+
+app.post('/api/reserver', async (req, res) => {
+  const utilisateur = utilisateurCourant();
+  if (!utilisateur) {
+    res.status(401).json({ message: 'Connectez-vous pour réserver.' });
+    return;
+  }
+  if (!['Client', 'Administrateur', 'Commercial', 'Responsable des opérations'].includes(String(utilisateur.profil ?? ''))) {
+    res.status(403).json({ message: 'Votre profil ne peut pas réserver depuis cet espace.' });
+    return;
+  }
+
+  const emplacementId = String(req.body?.emplacementId ?? '');
+  const dateDebut = String(req.body?.dateDebut ?? '');
+  const dateFin = String(req.body?.dateFin ?? '');
+  const message = String(req.body?.message ?? '').trim();
+
+  if (!emplacementId || !dateDebut || !dateFin) {
+    res.status(400).json({ message: 'Panneau, date de début et date de fin requis.' });
+    return;
+  }
+  if (dateFin < dateDebut) {
+    res.status(400).json({ message: 'La date de fin doit être postérieure au début.' });
+    return;
+  }
+  if (dateDebut < new Date().toISOString().slice(0, 10)) {
+    res.status(400).json({ message: 'La date de début ne peut pas être dans le passé.' });
+    return;
+  }
+
+  const { records } = await zite.emplacements.findAll({ limit: 1000 });
+  const panneau = records.find((e) => e.id === emplacementId);
+  if (!panneau) {
+    res.status(404).json({ message: 'Panneau introuvable.' });
+    return;
+  }
+  if (panneau.disponibilite !== 'Disponible') {
+    res.status(409).json({ message: 'Ce panneau n’est plus disponible.' });
+    return;
+  }
+
+  const { records: reservations } = await zite.reservations.findAll({ limit: 1000 });
+  const chevauche = reservations.some((r) => {
+    const lien = Array.isArray(r.emplacement) ? r.emplacement[0] : r.emplacement;
+    if (lien !== panneau.id) return false;
+    if (!['En attente', 'Confirmée', 'En cours'].includes(String(r.statut ?? ''))) return false;
+    const debut = String(r.dateDebut ?? '');
+    const fin = String(r.dateFin ?? '');
+    return !(dateFin < debut || dateDebut > fin);
+  });
+  if (chevauche) {
+    res.status(409).json({ message: 'Ce panneau est déjà réservé sur cette période.' });
+    return;
+  }
+
+  const jours = Math.max(1, Math.round((new Date(dateFin).getTime() - new Date(dateDebut).getTime()) / 86_400_000) + 1);
+  const montant = Math.round(((panneau.prixParSemaine ?? 0) * jours) / 7);
+  const reference = `RES-${Date.now().toString(36).toUpperCase()}`;
+
+  const clientId = utilisateur.clientId
+    ?? (await zite.clients.findAll({ limit: 1000 })).records.find((c) => (c.email ?? '').toLowerCase() === (utilisateur.email ?? '').toLowerCase())?.id;
+
+  const reservation = await zite.reservations.create({
+    record: {
+      referenceReservation: reference,
+      emplacement: [panneau.id],
+      client: clientId ? [clientId] : [],
+      dateDebut,
+      dateFin,
+      statut: 'En attente',
+      montant,
+      message: message || undefined,
+    },
+  });
+
+  await zite.emplacements.update({ id: panneau.id, record: { disponibilite: 'Réservé' } });
+
+  const texteAdmin = [
+    'Nouvelle réservation client',
+    '',
+    `Référence : ${reference}`,
+    `Panneau : ${panneau.referenceEmplacement} — ${[panneau.quartier, panneau.ville].filter(Boolean).join(', ')}`,
+    `Période : ${dateDebut} → ${dateFin} (${jours} jour(s))`,
+    `Montant estimé : ${montant.toLocaleString('fr-FR')} ${(await settings.societe()).devise}`,
+    `Client : ${utilisateur.nomComplet} (${utilisateur.email})`,
+    message ? `Message : ${message}` : '',
+  ].filter(Boolean).join('\n');
+
+  const texteClient = [
+    `Bonjour ${utilisateur.nomComplet},`,
+    '',
+    `Votre demande de réservation est enregistrée : ${reference}.`,
+    `Panneau : ${panneau.referenceEmplacement} — ${[panneau.quartier, panneau.ville].filter(Boolean).join(', ')}`,
+    `Période : ${dateDebut} → ${dateFin}`,
+    '',
+    'Notre équipe vous confirme la disponibilité sous 24 h.',
+    '— DIRECT DIALOG',
+  ].join('\n');
+
+  Promise.all([
+    notifierAdmins(settings, archiveEmail, `[DIRECT DIALOG] Réservation ${reference}`, texteAdmin),
+    notifierClient(settings, archiveEmail, String(utilisateur.email ?? ''), `Réservation ${reference} enregistrée`, texteClient),
+  ]).catch((erreur) => console.error('[reserver] notification :', erreur));
+
+  res.json({ success: true, reservationId: reservation.id, reference, montant, jours });
+});
+
+app.get('/api/mes-reservations', async (req, res) => {
+  const utilisateur = utilisateurCourant();
+  if (!utilisateur) {
+    res.status(401).json({ message: 'Non authentifié' });
+    return;
+  }
+  const [{ records: reservations }, { records: emplacements }] = await Promise.all([
+    zite.reservations.findAll({ limit: 1000 }),
+    zite.emplacements.findAll({ limit: 1000 }),
+  ]);
+  const panneaux = new Map(emplacements.map((e) => [e.id, e]));
+  const miennes = reservations
+    .filter((r) => {
+      const clientId = Array.isArray(r.client) ? r.client[0] : r.client;
+      return utilisateur.clientId ? clientId === utilisateur.clientId : false;
+    })
+    .map((r) => {
+      const lien = Array.isArray(r.emplacement) ? r.emplacement[0] : r.emplacement;
+      const p = panneaux.get(lien);
+      return {
+        id: r.id,
+        reference: r.referenceReservation,
+        panneau: p?.referenceEmplacement ?? '',
+        quartier: p?.quartier ?? '',
+        ville: p?.ville ?? '',
+        dateDebut: r.dateDebut,
+        dateFin: r.dateFin,
+        statut: r.statut,
+        montant: r.montant,
+      };
+    });
+  res.json({ reservations: miennes });
 });
 
 app.post('/api/:name', async (req, res) => {

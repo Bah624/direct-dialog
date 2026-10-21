@@ -56,7 +56,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const visible = (item: NavItem) =>
     (item.modulesVisibles ?? [item.module]).some((m) => permis(m, 'voir'));
 
-  const items = navItems.filter(visible);
+  const estClient = utilisateur?.profil === 'Client';
+  const items = estClient
+    ? [{ to: '/espace-client', label: 'Espace client', icon: MapPin, module: 'emplacements' } as NavItem]
+    : navItems.filter(visible);
   const currentPage = navItems.find((n) => n.to === location.pathname)?.label ?? 'Régie Publicitaire';
 
   const moduleCourant = moduleForPath(location.pathname);
@@ -129,7 +132,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="px-5 py-3 border-t border-slate-700 text-xs text-slate-500">
-          v2.3 · Régie Publicitaire
+          v2.4 · Régie Publicitaire
         </div>
       </aside>
 

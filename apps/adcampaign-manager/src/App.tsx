@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
@@ -15,6 +15,8 @@ import ReportsPage from '@/pages/Reports';
 import CollaborateursPage from '@/pages/Collaborateurs';
 import ParametresPage from '@/pages/Parametres';
 import Connexion from '@/pages/Connexion';
+import Inscription from '@/pages/Inscription';
+import EspaceClient from '@/pages/EspaceClient';
 
 // Le cockpit embarque Three.js : chargé à la demande pour ne pas alourdir l'app.
 const CockpitPage = lazy(() => import('@/pages/Cockpit'));
@@ -22,6 +24,7 @@ import { SessionProvider, useSession } from '@/lib/session';
 
 function Application() {
   const { pret, utilisateur } = useSession();
+  const location = useLocation();
 
   if (!pret) {
     return (
@@ -31,7 +34,15 @@ function Application() {
     );
   }
 
+  // Page d'inscription publique (lien envoyé aux clients).
+  if (location.pathname === '/inscription') return <Inscription />;
+
   if (!utilisateur) return <Connexion />;
+
+  // Un client n'a accès qu'à son espace de réservation.
+  if (utilisateur.profil === 'Client' && location.pathname !== '/espace-client') {
+    return <Navigate to="/espace-client" replace />;
+  }
 
   return (
     <Layout>
@@ -62,6 +73,7 @@ function Application() {
         <Route path="/rapports" element={<ReportsPage />} />
         <Route path="/agent" element={<AgentPage />} />
         <Route path="/parametres" element={<ParametresPage />} />
+        <Route path="/espace-client" element={<EspaceClient />} />
       </Routes>
     </Layout>
   );

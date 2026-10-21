@@ -164,6 +164,47 @@ panneau.
 Le fond de carte est **OpenStreetMap** : il nécessite une connexion Internet. Sans réseau,
 les marqueurs restent affichés sur un fond neutre.
 
+## Espace client et réservation en ligne (v2.4)
+
+![Inscription client](docs/inscription-client.png)
+
+Les clients disposent d'un **lien d'inscription public** :
+
+```
+https://votre-domaine/inscription
+```
+
+Ce lien se copie depuis *Paramètres → Utilisateurs* (carte « Lien d'inscription client »).
+Le client crée son compte (nom, société, e-mail, téléphone, mot de passe) et arrive
+directement dans son **espace client**.
+
+![Espace client](docs/espace-client.png)
+
+### Ce que voit le client
+
+- **Uniquement son espace client** : le menu ne contient que « Espace client ».
+- Les **panneaux disponibles** avec quartier, ville, localisation, type, format,
+  prix/semaine et période de disponibilité.
+- Un bouton **Réserver ce panneau** avec choix des dates et message.
+- La liste de **ses réservations** (référence, panneau, période, statut).
+
+### Ce qu'il ne peut pas faire
+
+- Voir ou modifier les panneaux **déjà occupés ou réservés** : ils n'apparaissent pas et une
+  réservation sur un panneau non disponible est refusée côté serveur (`409`).
+- Accéder aux autres modules (campagnes, facturation, stock, paramètres…).
+- Réserver deux fois la même période : le chevauchement est contrôlé côté serveur.
+
+### Notifications
+
+À chaque **inscription** et à chaque **réservation**, un e-mail part vers l'équipe
+(destinataires configurés dans *Paramètres → Notifications*, à défaut l'e-mail de la société
+ou les comptes administrateurs) et une confirmation est envoyée au client. Sans SMTP
+configuré, les messages sont archivés dans `data/outbox.jsonl`.
+
+Un profil **Client** a été ajouté aux rôles, avec pour seuls droits : voir les panneaux et
+gérer ses réservations.
+
 ## Fiche panneau et alertes de disponibilité (v2.1)
 
 ![Fiche panneau](docs/panneau-fiche.png)

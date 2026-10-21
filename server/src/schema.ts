@@ -103,6 +103,8 @@ export const TABLES: Record<string, TableSchema> = {
       dateFin: "date", // Date Fin
       statut: "single_select", // Statut
       montant: "currency", // Montant
+      client: "linked_record", // Client
+      message: "long_text", // Message
       dateReservation: "created_at", // Date Réservation
     },
   },
@@ -241,6 +243,7 @@ export const TABLES: Record<string, TableSchema> = {
       statut: "single_select", // Statut
       notes: "long_text", // Notes
       motDePasseHash: "single_line_text", // Mot de passe (scrypt)
+      clientId: "single_line_text", // Fiche client liée
       doitChangerMotDePasse: "checkbox", // Changement demandé
       derniereConnexion: "date", // Dernière Connexion
       dateCreation: "created_at", // Date Création
