@@ -202,17 +202,28 @@ html.immersif .cockpit {
 
 
 /* Application mobile : respecte l'encoche et les barres système. */
-.sidebar-app {
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+html {
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 @media (display-mode: standalone) {
-  .sidebar-app {
-    padding-top: env(safe-area-inset-top, 0px);
+  html {
+    --safe-top: env(safe-area-inset-top, 0px);
   }
 }
 
-html.native-app .sidebar-app {
-  padding-top: env(safe-area-inset-top, 0px);
+/* Dans l'APK, la hauteur de la barre d'état est mesurée et injectée en px. */
+html.native-app {
+  --safe-top: 24px;
+}
+
+.sidebar-app {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (max-width: 767px) {
+  html.native-app .sidebar-app {
+    top: var(--safe-top, 0px);
+    height: calc(100dvh - var(--safe-top, 0px));
+  }
 }

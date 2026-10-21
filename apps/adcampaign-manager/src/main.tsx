@@ -58,9 +58,27 @@ function RuntimeErrorFallback(props: { error: Error }) {
   );
 }
 
-// Application native (APK) : classe dédiée pour les marges de sécurité.
+// Application native (APK) : marges de sécurité mesurées sur la barre d'état.
 if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()) {
   document.documentElement.classList.add('native-app');
+
+  import('@capacitor/status-bar')
+    .then(async ({ StatusBar }) => {
+      try {
+        await StatusBar.setOverlaysWebView({ overlay: false });
+        const info = await StatusBar.getInfo();
+        const brut = Number((info as any)?.height ?? 0);
+        // La hauteur est parfois exprimée en pixels physiques.
+        const px = brut > 60 ? brut / (window.devicePixelRatio || 1) : brut;
+        const hauteur = Math.min(80, Math.max(0, Math.round(px)));
+        if (hauteur > 0) {
+          document.documentElement.style.setProperty('--safe-top', `${hauteur}px`);
+        }
+      } catch {
+        // La valeur CSS par défaut suffit.
+      }
+    })
+    .catch(() => undefined);
 }
 
 // Service worker : installation PWA et écran hors ligne (production seulement).

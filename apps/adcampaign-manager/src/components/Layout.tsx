@@ -69,7 +69,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     (moduleCourant === 'parametres' && permis('utilisateurs', 'voir'));
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div
+      className="flex h-[100dvh] bg-background overflow-hidden"
+      style={{ paddingTop: 'var(--safe-top, 0px)' }}
+    >
       {/* Mobile overlay */}
       {mobileOpen && <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setMobileOpen(false)} />}
 
@@ -132,7 +135,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="px-5 py-3 border-t border-slate-700 text-xs text-slate-500">
-          v2.5.2 · Régie Publicitaire
+          v2.5.3 · Régie Publicitaire
         </div>
       </aside>
 
