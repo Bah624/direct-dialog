@@ -217,6 +217,10 @@ Avec ces secrets, le workflow produit un **AAB signé**. Publiez-le dans la Play
 > être accessible depuis les téléphones (HTTPS recommandé). L'URL est fixée à la compilation
 > via `CAP_SERVER_URL`.
 
+**APK publié pour ce poste** : `app-debug.apk` dans la release **v2.5.1** pointe vers
+`http://10.81.97.235:8080` (l'adresse du Mac sur le Wi-Fi local). Le téléphone doit être sur
+le même réseau. Si l'adresse change, relancez le workflow **Android** avec la nouvelle URL.
+
 ## Espace client et réservation en ligne (v2.4)
 
 ![Inscription client](docs/inscription-client.png)
