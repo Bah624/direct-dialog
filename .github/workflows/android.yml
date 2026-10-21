@@ -62,7 +62,7 @@ jobs:
       - name: Synchronisation Capacitor
         working-directory: apps/adcampaign-manager
         env:
-          CAP_SERVER_URL: ${{ inputs.server_url || 'https://app.direct-dialog.com' }}
+          CAP_SERVER_URL: ${{ inputs.server_url || vars.APP_SERVER_URL || 'https://app.direct-dialog.com' }}
         run: npx cap sync android
 
       - name: Signature (secrets)
