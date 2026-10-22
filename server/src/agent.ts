@@ -220,7 +220,16 @@ async function rapportStock(ctx: Contexte, demande: string): Promise<ResultatAge
 
 async function rapportFactures(ctx: Contexte, demande: string): Promise<ResultatAgent> {
   if (!autorise(ctx, 'factures')) return refus('Facturation');
-  const factures = await lire(ctx, 'Factures');
+  const [factures, clients, campagnes] = await Promise.all([
+    lire(ctx, 'Factures'),
+    autorise(ctx, 'clients') ? lire(ctx, 'Clients') : Promise.resolve([] as Ligne[]),
+    autorise(ctx, 'campagnes') ? lire(ctx, 'Campagnes') : Promise.resolve([] as Ligne[]),
+  ]);
+  const nomClient = new Map(clients.map((c) => [c.id, c.nomClient ?? '']));
+  const clientDeCampagne = new Map(
+    campagnes.map((c) => [c.id, Array.isArray(c.client) ? c.client[0] : c.client]),
+  );
+  const nomCampagne = new Map(campagnes.map((c) => [c.id, c.nomCampagne ?? '']));
   const devise = (await ctx.settings.societe()).devise;
   const aujourd = aujourdHui();
   const impayees = factures.filter((f) => f.statutPaiement !== 'Payée');
@@ -229,14 +238,24 @@ async function rapportFactures(ctx: Contexte, demande: string): Promise<Resultat
   const retardTotal = enRetard.reduce((t, f) => t + nombre(f.montantTtc), 0);
   const base = demande.includes('retard') ? enRetard : impayees;
 
-  const lignes = base.map((f) => [
+  const lignes = base.map((f) => {
+    const lienClient = Array.isArray(f.client) ? f.client[0] : f.client;
+    const lienCampagne = Array.isArray(f.campagne) ? f.campagne[0] : f.campagne;
+    const client =
+      f.clientNom ??
+      nomClient.get(lienClient) ??
+      nomClient.get(clientDeCampagne.get(lienCampagne)) ??
+      '—';
+    return [
     f.numeroFacture ?? '',
-    f.clientNom ?? f.client ?? '',
+    client,
+    nomCampagne.get(lienCampagne) ?? '—',
     dateFr(f.dateEmission),
     dateFr(f.dateEcheance),
     argent(f.montantTtc, devise),
     f.statutPaiement ?? '',
-  ]);
+    ];
+  });
 
   return {
     intention: 'rapport_factures',
@@ -248,12 +267,12 @@ async function rapportFactures(ctx: Contexte, demande: string): Promise<Resultat
       { libelle: 'Retard', valeur: argent(retardTotal, devise), ton: enRetard.length ? 'danger' : 'ok' },
     ],
     tableau: {
-      colonnes: ['Facture', 'Client', 'Émise', 'Échéance', 'TTC', 'Statut'],
+      colonnes: ['Facture', 'Client', 'Campagne', 'Émise', 'Échéance', 'TTC', 'Statut'],
       lignes,
     },
     export: {
       nom: 'factures-impayees.csv',
-      csv: csv(['Facture', 'Client', 'Émise', 'Échéance', 'TTC', 'Statut'], lignes),
+      csv: csv(['Facture', 'Client', 'Campagne', 'Émise', 'Échéance', 'TTC', 'Statut'], lignes),
     },
     liens: [{ libelle: 'Ouvrir la facturation', chemin: '/factures' }],
     suggestions: ['Rapport des campagnes', 'Résumé du jour'],
