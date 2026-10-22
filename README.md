@@ -164,6 +164,39 @@ panneau.
 Le fond de carte est **OpenStreetMap** : il nécessite une connexion Internet. Sans réseau,
 les marqueurs restent affichés sur un fond neutre.
 
+## Assistant IA (v2.6)
+
+![Assistant IA](docs/assistant-ia.png)
+
+L'onglet **Assistant IA** est un assistant connecté à la base de l'application. Il comprend
+une demande en français, interroge les données en temps réel et répond avec un texte, des
+indicateurs, un tableau et un **export CSV**.
+
+### Ce qu'il sait faire
+
+| Demande | Réponse |
+|---|---|
+| « Résumé du jour » | Plan d'action priorisé : factures en retard, réservations à confirmer, articles en alerte, campagnes à valider |
+| « Rapport du stock » | Articles, seuils, ruptures, valeur totale + export |
+| « Factures impayées » / « en retard » | Liste, montants dus, retards + export |
+| « Rapport des campagnes » | Répartition par statut, budget cumulé + export |
+| « Panneaux disponibles » | Liste par quartier/ville, disponibilité + export |
+| « Réservations en attente » | Liste et statuts + export |
+| « Top clients » | Campagnes et facturation par client + export |
+| « Travaux » | En cours, planifiés, machinistes |
+| « Comment créer une campagne ? » | Mode formation : étapes numérotées + accès direct au module |
+
+Il propose aussi des **suggestions** cliquables après chaque réponse et des **liens** vers le
+module concerné.
+
+### Droits respectés
+
+L'assistant s'exécute **côté serveur avec votre session** : il ne renvoie que les données
+auxquelles votre profil a accès. Un machiniste qui demande les factures reçoit un refus
+explicite, sans aucune donnée.
+
+Aucune clé d'API n'est nécessaire : le moteur est déterministe et fonctionne hors ligne.
+
 ## Application mobile : PWA et Android (v2.5)
 
 L'application s'installe sur un téléphone de deux façons.

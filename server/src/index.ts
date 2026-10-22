@@ -35,6 +35,7 @@ import {
   type Canaux,
 } from './notifications';
 import { analyserPanneaux, demarrerPlanificateur, envoyerAlertesPanneaux } from './alertes';
+import { repondre as repondreAgent, SUGGESTIONS_DEPART } from './agent';
 
 const { store, dataDir } = await bootstrap();
 
@@ -623,6 +624,40 @@ app.get('/api/mes-reservations', async (req, res) => {
       };
     });
   res.json({ reservations: miennes });
+});
+
+// ---------------------------------------------------------------------------
+// Assistant IA : interroge la base et répond (rapports, aide, plan d'action).
+// ---------------------------------------------------------------------------
+app.get('/api/agent/suggestions', (_req, res) => {
+  const utilisateur = utilisateurCourant();
+  if (!utilisateur) {
+    res.status(401).json({ message: 'Non authentifié' });
+    return;
+  }
+  res.json({ suggestions: SUGGESTIONS_DEPART });
+});
+
+app.post('/api/agent', async (req, res) => {
+  const utilisateur = utilisateurCourant();
+  if (!utilisateur) {
+    res.status(401).json({ message: 'Connectez-vous pour utiliser l’assistant.' });
+    return;
+  }
+  const message = String(req.body?.message ?? '').trim();
+  if (!message) {
+    res.status(400).json({ message: 'Écrivez votre demande.' });
+    return;
+  }
+
+  try {
+    const permissions = await settings.permissions();
+    const resultat = await repondreAgent(message, { store, settings, utilisateur, permissions });
+    res.json(resultat);
+  } catch (erreur: any) {
+    console.error('[agent]', erreur);
+    res.status(500).json({ message: 'L’assistant n’a pas pu traiter la demande.' });
+  }
 });
 
 app.post('/api/:name', async (req, res) => {

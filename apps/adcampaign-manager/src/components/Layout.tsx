@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Megaphone, Users, MapPin, Printer, CalendarCheck, FileText, ChevronRight, Menu, X, Mic, Package, BarChart2, UserPlus, Settings, ShieldAlert, LogOut, Boxes, Maximize2, Minimize2 } from 'lucide-react';
+import { LayoutDashboard, Megaphone, Users, MapPin, Printer, CalendarCheck, FileText, ChevronRight, Menu, X, Bot, Package, BarChart2, UserPlus, Settings, ShieldAlert, LogOut, Boxes, Maximize2, Minimize2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { cn } from '@project/components/lib/utils';
 import { useSession } from '@/lib/session';
@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
   { to: '/stock', label: 'Gestion des Stocks', icon: Package, module: 'stock' },
   { to: '/collaborateurs', label: 'Collaborateurs', icon: UserPlus, module: 'collaborateurs' },
   { to: '/rapports', label: 'Rapports', icon: BarChart2, module: 'rapports' },
-  { to: '/agent', label: 'Agent IA Vocal', icon: Mic, module: 'agent' },
+  { to: '/agent', label: 'Assistant IA', icon: Bot, module: 'agent' },
   {
     to: '/parametres',
     label: 'Paramètres',
@@ -135,7 +135,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="px-5 py-3 border-t border-slate-700 text-xs text-slate-500">
-          v2.5.3 · Régie Publicitaire
+          v2.6 · Régie Publicitaire
         </div>
       </aside>
 

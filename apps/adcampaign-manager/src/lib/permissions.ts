@@ -11,7 +11,7 @@ export const MODULE_LABELS: Record<string, string> = {
   stock: 'Gestion des stocks',
   collaborateurs: 'Collaborateurs',
   rapports: 'Rapports',
-  agent: 'Agent IA vocal',
+  agent: 'Assistant IA',
   utilisateurs: 'Utilisateurs',
   parametres: 'Paramètres',
 };
@@ -27,7 +27,7 @@ export const MODULE_DESCRIPTIONS: Record<string, string> = {
   stock: 'Articles, seuils et sorties de stock',
   collaborateurs: 'Équipe et notifications',
   rapports: 'Rapports filtrables et impression',
-  agent: 'Assistant vocal et transcription',
+  agent: 'Rapports, recherche et aide dans l’application',
   utilisateurs: 'Comptes et profils',
   parametres: 'Société, facturation et droits',
 };
